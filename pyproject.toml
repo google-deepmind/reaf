@@ -1,0 +1,63 @@
+[build-system]
+requires = ["scikit-build-core==0.11.0", "pybind11"]
+build-backend = "scikit_build_core.build"
+
+[tool.scikit-build]
+wheel.expand-macos-universal-tags = true
+minimum-version = "build-system.requires"
+cmake.args = [
+  "-DFETCHCONTENT_UPDATES_DISCONNECTED_PYBIND11:BOOL=ON",
+  "-DFETCHCONTENT_TRY_FIND_PACKAGE_MODE=ALWAYS"
+]
+
+[project]
+name = "reaf"
+version = "1.0.0"
+description = "Robotics Environment Authoring Framework."
+requires-python = ">=3.10"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Typing :: Typed",
+]
+keywords = [
+  "RL",
+  "Reinforcement Learning",
+  "AI",
+  "ML",
+  "Environment",
+  "Authoring tool",
+]
+authors = [
+  {name = "Google DeepMind", email = "robotics+oss@google.com"},
+]
+maintainers = [
+  {name = "Antoine Laurens", email = "alaurens@google.com"},
+  {name = "Francesco Romano", email = "fraromano@google.com"},
+  {name = "Jose Enrique Chen", email = "josechenf@google.com"},
+]
+
+dependencies = [
+  "numpy >= 2",
+  "absl-py",
+  "dm-env",
+  "gdm_robotics",
+  "typing-extensions",
+  "immutabledict",
+  "pytest",
+  "StrEnum",
+  "scipy",
+]
+
+[project.urls]
+Repository = "https://github.com/google-deepmind/reaf.git"
+Issues = "https://github.com/google-deepmind/reaf/issues"
+
+[tool.pytest.ini_options]
+minversion = "6.2.5"
+addopts = "-ra -q"
+python_files = ["*_test.py"]
