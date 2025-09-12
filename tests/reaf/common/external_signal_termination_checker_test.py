@@ -57,6 +57,18 @@ class ExternalSignalTerminationCheckerTest(absltest.TestCase):
         termination_checker.TerminationResult.TERMINATE,
     )
 
+  def test_signal_truncates_when_do_truncate_is_called(self):
+    checker = (
+        external_signal_termination_checker.ExternalSignalTerminationChecker(
+            name="test"
+        )
+    )
+    checker.do_truncate()
+    self.assertEqual(
+        checker.check_termination(required_features={}),
+        termination_checker.TerminationResult.TRUNCATE,
+    )
+
   def test_reset_clears_signal(self):
     checker = (
         external_signal_termination_checker.ExternalSignalTerminationChecker(

@@ -52,6 +52,11 @@ class ExternalSignalTerminationChecker(termination_checker.TerminationChecker):
     with self._mutex:
       self._checker_state = termination_checker.TerminationResult.TERMINATE
 
+  def do_truncate(self) -> None:
+    """Signal that the checker should return "TRUNCATE" on the next call."""
+    with self._mutex:
+      self._checker_state = termination_checker.TerminationResult.TRUNCATE
+
   def name(self) -> str:
     """Returns a unique string identifier for this object."""
     return self._name
