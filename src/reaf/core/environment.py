@@ -80,6 +80,18 @@ class EndOfEpisodeHandler:
     """
 
 
+class EnvironmentCloser(abc.ABC):
+  """Handler called when the environment is closed."""
+
+  @abc.abstractmethod
+  def close(self) -> None:
+    """Releases resources when the environment is closed.
+
+    This method is called automatically when exiting the environment's
+    context manager (`with` statement).
+    """
+
+
 class Environment(gdmr_env.Environment):
   """The Robotics Environment Authoring Framework (REAF) Environment class."""
 
@@ -96,6 +108,7 @@ class Environment(gdmr_env.Environment):
           reaf_observation_space_adapter.ObservationSpaceAdapter | None
       ) = None,
       end_of_episode_handler: EndOfEpisodeHandler | None = None,
+      environment_closer: EnvironmentCloser | None = None,
       action_spec_enforcement_option: ActionSpecEnforcementOption = ActionSpecEnforcementOption.RAISE_ERROR,
   ):
     """Creates an environment.
@@ -117,6 +130,10 @@ class Environment(gdmr_env.Environment):
         exposed to the agent as observations.
       end_of_episode_handler: Called at the end of an episode, after the last
         step.
+      environment_closer: Specifies the handler to be called when the
+        environment is closed. This is called automatically on exit if the
+        environment is used as a context manager. If None, no action is
+        performed at close.
       action_spec_enforcement_option: How to enforce the action spec. If
         `CLIP_TO_SPEC`, the action will be clipped to the spec. If `WARNING`, an
         warning logged if the action is outside the spec. If `RAISE_ERROR`, an
@@ -132,6 +149,7 @@ class Environment(gdmr_env.Environment):
         end_of_episode_handler or EndOfEpisodeHandler()
     )
     self._environment_reset = environment_reset
+    self._environment_closer = environment_closer
     self._action_spec_enforcement_option = action_spec_enforcement_option
 
     # Before assigning the adapters, validate the specs on the task logic layer
@@ -181,6 +199,11 @@ class Environment(gdmr_env.Environment):
         _read_only_zeros_like_spec,
         (self._timestep_spec.reward, self._timestep_spec.discount),
     )
+
+  def close(self) -> None:
+    """Frees any resources used by the environment."""
+    if self._environment_closer is not None:
+      self._environment_closer.close()
 
   def default_reset_options(self) -> gdmr_env.ResetOptions:
     return self._environment_reset.default_reset_configuration()

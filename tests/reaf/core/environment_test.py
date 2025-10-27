@@ -1734,6 +1734,89 @@ class EnvironmentLoggerIntegrationTest(absltest.TestCase):
         ],
     )
 
+  def test_close_calls_environment_closer(self):
+    environment_closer = mock.create_autospec(
+        reaf_environment.EnvironmentCloser, instance=True
+    )
+
+    ttl_mock = mock.create_autospec(reaf_tll.TaskLogicLayer, instance=True)
+    # Define reward and discount spec to satisfy __init__ validation.
+    ttl_mock.reward_spec.return_value = specs.Array(
+        shape=(1,), dtype=np.float32
+    )
+    ttl_mock.discount_spec.return_value = specs.Array(
+        shape=(1,), dtype=np.float32
+    )
+    ttl_mock.commands_spec.return_value = {}
+
+    action_adapter = mock.create_autospec(
+        reaf_action_space_adapter.ActionSpaceAdapter, instance=True
+    )
+    action_adapter.task_commands_keys.return_value = set()
+
+    environment = reaf_environment.Environment(
+        data_acquisition_and_control_layer=mock.create_autospec(
+            reaf_dacl.DataAcquisitionAndControlLayer, instance=True
+        ),
+        task_logic_layer=ttl_mock,
+        action_space_adapter=action_adapter,
+        observation_space_adapter=mock.create_autospec(
+            reaf_observation_space_adapter.ObservationSpaceAdapter,
+            instance=True,
+        ),
+        environment_reset=mock.create_autospec(
+            reaf_environment.EnvironmentReset, instance=True
+        ),
+        environment_closer=environment_closer,
+    )
+
+    environment.close()
+
+    environment_closer.close.assert_called_once()
+
+  def test_context_manager_calls_close(self):
+    environment_closer = mock.create_autospec(
+        reaf_environment.EnvironmentCloser, instance=True
+    )
+
+    ttl_mock = mock.create_autospec(reaf_tll.TaskLogicLayer, instance=True)
+    # Define reward and discount spec to satisfy __init__ validation.
+    ttl_mock.reward_spec.return_value = specs.Array(
+        shape=(1,), dtype=np.float32
+    )
+    ttl_mock.discount_spec.return_value = specs.Array(
+        shape=(1,), dtype=np.float32
+    )
+    ttl_mock.commands_spec.return_value = {}
+
+    action_adapter = mock.create_autospec(
+        reaf_action_space_adapter.ActionSpaceAdapter, instance=True
+    )
+    action_adapter.task_commands_keys.return_value = set()
+
+    environment = reaf_environment.Environment(
+        data_acquisition_and_control_layer=mock.create_autospec(
+            reaf_dacl.DataAcquisitionAndControlLayer, instance=True
+        ),
+        task_logic_layer=ttl_mock,
+        action_space_adapter=action_adapter,
+        observation_space_adapter=mock.create_autospec(
+            reaf_observation_space_adapter.ObservationSpaceAdapter,
+            instance=True,
+        ),
+        environment_reset=mock.create_autospec(
+            reaf_environment.EnvironmentReset, instance=True
+        ),
+        environment_closer=environment_closer,
+    )
+
+    # Use the environment as a context manager
+    with environment:
+      pass
+
+    # Verify close() was called on exit
+    environment_closer.close.assert_called_once()
+
 
 if __name__ == "__main__":
   absltest.main()
