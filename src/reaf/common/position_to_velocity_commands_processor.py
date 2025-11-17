@@ -19,39 +19,10 @@ import dataclasses
 from dm_env import specs
 from gdm_robotics.interfaces import types as gdmr_types
 import numpy as np
+from reaf.common import compute_velocity_command
 from reaf.core import commands_processor
 from reaf.core import features_observer
 from typing_extensions import override
-
-
-def _compute_velocity_command(
-    desired_positions: np.ndarray,
-    current_positions: np.ndarray,
-    current_velocity_command: np.ndarray,
-    minimum_velocity_command: np.ndarray,
-    maximum_velocity_command: np.ndarray,
-    feedback_gains: np.ndarray,
-    max_acceleration: np.ndarray,
-    control_timestep: float,
-) -> np.ndarray:
-  """Computes a velocity using a P-controller on the position error."""
-  desired_velocity = feedback_gains * (desired_positions - current_positions)
-  desired_delta_velocity = desired_velocity - current_velocity_command
-
-  max_allowed_velocity_delta = max_acceleration * control_timestep
-  clipped_desired_delta_velocity = np.clip(
-      desired_delta_velocity,
-      -max_allowed_velocity_delta,
-      max_allowed_velocity_delta,
-  )
-  clipped_desired_velocity = (
-      current_velocity_command + clipped_desired_delta_velocity
-  )
-  return np.clip(
-      clipped_desired_velocity,
-      minimum_velocity_command,
-      maximum_velocity_command,
-  )
 
 
 @dataclasses.dataclass
@@ -131,17 +102,19 @@ class PositionToVelocityCommandsProcessor(
   def process_commands(
       self, consumed_commands: Mapping[str, gdmr_types.ArrayType]
   ) -> Mapping[str, gdmr_types.ArrayType]:
-    self._current_velocity_command = _compute_velocity_command(
-        desired_positions=consumed_commands[
-            self._config.consumed_position_command_key
-        ],
-        current_positions=self._current_position,
-        current_velocity_command=self._current_velocity_command,
-        minimum_velocity_command=self._config.minimum_velocity_command,
-        maximum_velocity_command=self._config.maximum_velocity_command,
-        feedback_gains=self._config.feedback_gains,
-        max_acceleration=self._config.max_acceleration,
-        control_timestep=self._config.control_timestep,
+    self._current_velocity_command = (
+        compute_velocity_command.compute_velocity_command(
+            desired_positions=consumed_commands[
+                self._config.consumed_position_command_key
+            ],
+            current_positions=self._current_position,
+            current_velocity_command=self._current_velocity_command,
+            minimum_velocity_command=self._config.minimum_velocity_command,
+            maximum_velocity_command=self._config.maximum_velocity_command,
+            feedback_gains=self._config.feedback_gains,
+            max_acceleration=self._config.max_acceleration,
+            control_timestep=self._config.control_timestep,
+        )
     )
     return {
         self._config.produced_velocity_command_key: (
@@ -193,8 +166,8 @@ class PositionToVelocityCommandsProcessor(
 
     Args:
       features: The features to observe. The observed feature must have the same
-        shape and dtype as the consumed command, we expect the feature to be
-        the current position.
+        shape and dtype as the consumed command, we expect the feature to be the
+        current position.
 
     Raises:
       ValueError: If the shape of the reference feature is different to the
