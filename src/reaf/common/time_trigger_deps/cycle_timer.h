@@ -16,8 +16,8 @@
 
 #include <memory>
 
-#include <absl/time/time.h>
 #include "clock.h"
+#include <absl/time/time.h>
 
 namespace reaf {
 
