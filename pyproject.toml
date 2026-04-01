@@ -1,5 +1,5 @@
 [build-system]
-requires = ["scikit-build-core==0.11.0", "pybind11"]
+requires = ["scikit-build-core==0.12.2", "pybind11==3.0.2"]
 build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]
@@ -12,7 +12,7 @@ cmake.args = [
 
 [project]
 name = "reaf"
-version = "1.0.0"
+version = "1.0.1"
 description = "Robotics Environment Authoring Framework."
 requires-python = ">=3.10,<3.14"
 readme = "README.md"
