@@ -1,14 +1,10 @@
 [build-system]
-requires = ["scikit-build-core==0.12.2", "pybind11==3.0.2"]
+requires = ["scikit-build-core==0.12.2", "pybind11==3.0.3"]
 build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]
 wheel.expand-macos-universal-tags = true
 minimum-version = "build-system.requires"
-cmake.args = [
-  "-DFETCHCONTENT_UPDATES_DISCONNECTED_PYBIND11:BOOL=ON",
-  "-DFETCHCONTENT_TRY_FIND_PACKAGE_MODE=ALWAYS"
-]
 
 [project]
 name = "reaf"

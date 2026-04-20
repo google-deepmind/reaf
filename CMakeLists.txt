@@ -11,38 +11,40 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.24)
 project(reaf LANGUAGES CXX)
 
-set(PYBIND11_FINDPYTHON ON)
-set(USE_SYSTEM_PYBIND ON)  # Disable fetch pybind11 from pybind11-abseil.
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+set(PYBIND11_FINDPYTHON ON)  # Forces Pybind11 to search for the interpreter.
 # Explicitly find Python. This is to avoid issues when PyBind tries to find it
 # (incorrectly).
 find_package(Python3 COMPONENTS Interpreter Development)
 find_package(pybind11 CONFIG REQUIRED)
 
+option(REAF_USE_SYSTEM_ABSEIL "Whether to use system Abseil" OFF)
+
+if(REAF_USE_SYSTEM_ABSEIL)
+    set(ABSEIL_FIND_ARGS FIND_PACKAGE_ARGS NAMES absl)
+else()
+    set(ABSEIL_FIND_ARGS "")
+endif()
 
 include(FetchContent)
+
 FetchContent_Declare(
-  abseil-cpp
-  # Specify the commit you depend on and update it regularly.
-  URL https://github.com/abseil/abseil-cpp/archive/refs/tags/20240722.0.tar.gz
-)
+    abseil-cpp
+    GIT_REPOSITORY https://github.com/abseil/abseil-cpp.git
+    GIT_TAG 216a6bed75c9ec254ae0e5af537e5b9635b45191  # 20240722.2
+    ${ABSEIL_FIND_ARGS}
+    )
 set(ABSL_PROPAGATE_CXX_STD ON CACHE BOOL "" FORCE)
 
-# Note: pybind11_abseil will internally try to fetch both abseil-cpp and
-# pybind11.
-# abseil-cpp is not a problem as it is declared above and our declaration, being
-# done first, takes precedence.
-# pybind11 is more of a problem. We will allow pybind11_abseil to fetch it and
-# we will check for its existence just to be on the safe side.
+set(USE_SYSTEM_PYBIND ON)  # Disable fetch pybind11 from pybind11-abseil.
 FetchContent_Declare(
-    pybind11_abseil
-    GIT_REPOSITORY https://github.com/pybind/pybind11_abseil.git
-    GIT_TAG master
+  pybind11_abseil
+  GIT_REPOSITORY https://github.com/pybind/pybind11_abseil.git
+  GIT_TAG fbc546beb4f798f56df2a44810e45327f36c1e52  # 03/04/2026
   )
 # pybind11_abseil internally forces interprocedural optimization to off. But
 # this is not propagated up to the top level CMakeLists.txt, which means that
