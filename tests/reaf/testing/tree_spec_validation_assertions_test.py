@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Test TestRewardProvider module."""
+import unittest
+
 from dm_env import specs
 from gdm_robotics.interfaces import types as gdmr_types
 import numpy as np
@@ -69,7 +71,7 @@ class TreeSpecValidationAssertionsTest(
       ),
   )
 
-  @absltest.skip("expectedFailure fails with pytest")
+  @unittest.expectedFailure
   def test_assert_tree_matches_spec_failure(
       self,
       tree_structure: tree.Structure[gdmr_types.ArrayType],
