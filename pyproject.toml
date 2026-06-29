@@ -49,11 +49,21 @@ dependencies = [
   "scipy",
 ]
 
+[project.optional-dependencies]
+simulation = [
+  "mujoco >= 3.10.0",
+  "mujoco-warp >= 3.9.0",
+  "torch >= 2.0.0",
+]
+dev = [
+  "pytest-xdist",
+]
+
 [project.urls]
 Repository = "https://github.com/google-deepmind/reaf.git"
 Issues = "https://github.com/google-deepmind/reaf/issues"
 
 [tool.pytest.ini_options]
 minversion = "6.2.5"
-addopts = "-ra -q"
+addopts = "--import-mode=importlib"
 python_files = ["*_test.py"]
