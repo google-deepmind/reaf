@@ -26,11 +26,11 @@ from reaf.common import environment_reset_from_callable
 from reaf.common import maximum_steps_termination_checker
 from reaf.common import partitioner_action_space_adapter
 from reaf.common import time_trigger
-from reaf.core import data_acquisition_and_control_layer
 from reaf.core import default_discount_provider
 from reaf.core import default_observation_space_adapter
+from reaf.core import device_layer as dl_module
 from reaf.core import environment
-from reaf.core import task_logic_layer
+from reaf.core import task_layer as tl_module
 
 
 _EPISODE_PERIOD = datetime.timedelta(seconds=0.1)  # 100ms == 10Hz.
@@ -44,19 +44,19 @@ def create_environment(
 ) -> environment.Environment:
   """Returns a new Environment for the specified robot."""
 
-  # The DataAcquisitionAndControlLayer represents the "connection" to the
+  # The DeviceLayer represents the "connection" to the
   # hardware. It collects measurements coming from the (hardware) sensors, sends
   # the correct control actions and synchronise the timing to the Environment
   # expected frequency.
-  dacl = data_acquisition_and_control_layer.DataAcquisitionAndControlLayer(
+  device_layer = dl_module.DeviceLayer(
       device_coordinator=ideal_robot_coordinator.IdealRobotCoordinator(robot),
       commands_trigger=None,
       measurements_trigger=time_trigger.TimeTrigger(period=_EPISODE_PERIOD),
   )
 
-  # The TaskLogicLayer allows to customise the environment behaviour on a
-  # per-task basis. Whilst the DataAcquisitionAndControlLayer is usually tied to
-  # a specific hardware instantiation, the TaskLogicLayer can, and usually vary
+  # The TaskLayer allows to customise the environment behaviour on a
+  # per-task basis. Whilst the DeviceLayer is usually tied to
+  # a specific hardware instantiation, the TaskLayer can, and usually vary
   # depending on the actual task. It provides the possibility to add additional
   # "features" (i.e. produced values) that can be computed from the original
   # hardware measurements or from other sources and it provides the possibility
@@ -90,7 +90,7 @@ def create_environment(
       )
   )
 
-  ttl = task_logic_layer.TaskLogicLayer(
+  task_layer = tl_module.TaskLayer(
       commands_processors=(torques_to_current_processor,),
       features_producers=(
           task_logic_elements.ReferenceProducer(setpoint_provider),
@@ -109,7 +109,7 @@ def create_environment(
   # Finally we put everything together into an Environment.
 
   # We first need to define how to map all the features produced by the
-  # TaskLogicLayer (which, for example, can be used only for reward or
+  # TaskLayer (which, for example, can be used only for reward or
   # termination) into actual observations exposed by the Environment.
   #
   # In this example we return all the features, so we leave all parameters
@@ -119,7 +119,9 @@ def create_environment(
   # agent.
   observation_space_adapter = (
       default_observation_space_adapter.DefaultObservationSpaceAdapter(
-          task_features_spec=ttl.features_spec(dacl.measurements_spec()),
+          task_features_spec=task_layer.features_spec(
+              device_layer.measurements_spec()
+          ),
           selected_features=None,
           renamed_features=None,
           observation_type_mapper=None,
@@ -133,11 +135,11 @@ def create_environment(
   # directly from the agent and wrapped in a dictionary with the correct key.
   # Importantly, here is where we define the action_spec of the environment
   # which might be different from the one exposed by the
-  # "DataAcquisitionAndControlLayer".
+  # "DeviceLayer".
 
   # The action spec corresponds to the commands spec associated to the
   # ROBOT_COMMAND_CURRENT_KEY key.
-  action_spec = dacl.commands_spec()[
+  action_spec = device_layer.commands_spec()[
       ideal_robot_device.ROBOT_COMMAND_CURRENT_KEY
   ]
 
@@ -153,8 +155,8 @@ def create_environment(
   )
 
   return environment.Environment(
-      data_acquisition_and_control_layer=dacl,
-      task_logic_layer=ttl,
+      device_layer=device_layer,
+      task_layer=task_layer,
       action_space_adapter=action_space_adapter,
       observation_space_adapter=observation_space_adapter,
       environment_reset=environment_reset_from_callable.EnvironmentResetFromCallable(

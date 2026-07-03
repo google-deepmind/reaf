@@ -15,6 +15,7 @@
 
 from collections.abc import Mapping, Sequence
 import random
+from typing import cast
 
 from dm_env import specs
 from gdm_robotics.interfaces import types as gdmr_types
@@ -24,11 +25,12 @@ from reaf.common import environment_reset_from_callable
 from reaf.common import partitioner_action_space_adapter
 from reaf.core import action_space_adapter
 from reaf.core import commands_processor as reaf_commands_processor
-from reaf.core import data_acquisition_and_control_layer as reaf_dacl
+from reaf.core import data_acquisition_and_control_layer as dacl_module
 from reaf.core import default_discount_provider
 from reaf.core import default_observation_space_adapter
 from reaf.core import device
 from reaf.core import device_coordinator
+from reaf.core import device_layer
 from reaf.core import discount_provider as reaf_discount_provider
 from reaf.core import environment
 from reaf.core import features_observer as reaf_features_observers
@@ -36,7 +38,8 @@ from reaf.core import features_producer as reaf_features_producer
 from reaf.core import logger as reaf_logger
 from reaf.core import observation_space_adapter
 from reaf.core import reward_provider as reaf_reward_provider
-from reaf.core import task_logic_layer as reaf_tll
+from reaf.core import task_layer
+from reaf.core import task_logic_layer as tll_module
 from reaf.core import termination_checker as reaf_termination_checker
 import tree
 from typing_extensions import override
@@ -44,17 +47,20 @@ from typing_extensions import override
 
 def create_dacl(
     *devices: device.Device,
-) -> reaf_dacl.DataAcquisitionAndControlLayer:
-  """Returns a DataAcquisitionAndControlLayer.
+) -> dacl_module.DataAcquisitionAndControlLayer:
+  """Returns a DACL.
 
   Args:
     *devices: devices to be used, a FakeDeviceCoordinator is given to the DACL.
   """
 
-  return reaf_dacl.DataAcquisitionAndControlLayer(
-      device_coordinator=FakeDeviceCoordinator(devices=list(devices)),
-      commands_trigger=None,
-      measurements_trigger=None,
+  return cast(
+      dacl_module.DataAcquisitionAndControlLayer,
+      device_layer.DeviceLayer(
+          device_coordinator=FakeDeviceCoordinator(devices=list(devices)),
+          commands_trigger=None,
+          measurements_trigger=None,
+      ),
   )
 
 
@@ -75,22 +81,9 @@ def create_task_layer(
         Sequence[reaf_features_observers.FeaturesObserver] | None
     ) = None,
     loggers: Sequence[reaf_logger.Logger] | None = None,
-) -> reaf_tll.TaskLogicLayer:
-  """Returns a TaskLogicLayer.
-
-  Args:
-    commands_processors: commands processors, defaults to an empty list.
-    features_producers:  features producers, defaults to an empty list.
-    reward_provider: A reward provider to be used, if none is given a
-      FakeRewardProvider is used.
-    termination_checkers: termination checkers, if none is given a
-      FakeTerminationChecker is used.
-    discount_provider: A discount provider, if none is given a
-      DefaultDiscountProvider is used.
-    features_observers: features observers, defaults to an empty list.
-    loggers: loggers, defaults to an empty list.
-  """
-  return reaf_tll.TaskLogicLayer(
+) -> task_layer.TaskLayer:
+  """Returns a TaskLayer."""
+  return task_layer.TaskLayer(
       commands_processors=commands_processors or [],
       features_producers=features_producers or [],
       reward_provider=reward_provider or RandomRewardProvider(),
@@ -99,6 +92,39 @@ def create_task_layer(
       or default_discount_provider.DefaultDiscountProvider(),
       features_observers=features_observers or [],
       loggers=loggers or [],
+  )
+
+
+def create_task_logic_layer(
+    *,
+    commands_processors: (
+        Sequence[reaf_commands_processor.CommandsProcessor] | None
+    ) = None,
+    features_producers: (
+        Sequence[reaf_features_producer.FeaturesProducer] | None
+    ) = None,
+    reward_provider: reaf_reward_provider.RewardProvider | None = None,
+    termination_checkers: (
+        Sequence[reaf_termination_checker.TerminationChecker] | None
+    ) = None,
+    discount_provider: reaf_discount_provider.DiscountProvider | None = None,
+    features_observers: (
+        Sequence[reaf_features_observers.FeaturesObserver] | None
+    ) = None,
+    loggers: Sequence[reaf_logger.Logger] | None = None,
+) -> tll_module.TaskLogicLayer:
+  """Returns a TaskLogicLayer."""
+  return cast(
+      tll_module.TaskLogicLayer,
+      create_task_layer(
+          commands_processors=commands_processors,
+          features_producers=features_producers,
+          reward_provider=reward_provider,
+          termination_checkers=termination_checkers,
+          discount_provider=discount_provider,
+          features_observers=features_observers,
+          loggers=loggers,
+      ),
   )
 
 

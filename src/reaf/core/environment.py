@@ -16,7 +16,8 @@
 import abc
 from collections.abc import Mapping
 import strenum
-from typing import Generic
+from typing import Generic, cast
+import warnings
 
 from absl import logging
 import dm_env
@@ -25,12 +26,14 @@ from gdm_robotics.interfaces import environment as gdmr_env
 from gdm_robotics.interfaces import types as gdmr_types
 import numpy as np
 from reaf.core import action_space_adapter as reaf_action_space_adapter
-from reaf.core import data_acquisition_and_control_layer as reaf_dacl
+from reaf.core import data_acquisition_and_control_layer as dacl_module
 from reaf.core import default_observation_space_adapter
+from reaf.core import device_layer
 from reaf.core import logger as reaf_logger
 from reaf.core import observation_space_adapter as reaf_observation_space_adapter
 from reaf.core import pass_through_action_space_adapter
-from reaf.core import task_logic_layer as reaf_tll
+from reaf.core import task_layer
+from reaf.core import task_logic_layer as tll_module
 import tree
 
 
@@ -98,8 +101,8 @@ class Environment(gdmr_env.Environment):
   def __init__(
       self,
       *,
-      data_acquisition_and_control_layer: reaf_dacl.DataAcquisitionAndControlLayer,
-      task_logic_layer: reaf_tll.TaskLogicLayer,
+      device_layer: device_layer.DeviceLayer | None = None,
+      task_layer: task_layer.TaskLayer | None = None,
       environment_reset: EnvironmentReset,
       action_space_adapter: (
           reaf_action_space_adapter.ActionSpaceAdapter | None
@@ -110,13 +113,17 @@ class Environment(gdmr_env.Environment):
       end_of_episode_handler: EndOfEpisodeHandler | None = None,
       environment_closer: EnvironmentCloser | None = None,
       action_spec_enforcement_option: ActionSpecEnforcementOption = ActionSpecEnforcementOption.RAISE_ERROR,
+      # Deprecated kwargs kept for backwards compatibility.
+      data_acquisition_and_control_layer: (
+          device_layer.DeviceLayer | None
+      ) = None,
+      task_logic_layer: task_layer.TaskLayer | None = None,
   ):
     """Creates an environment.
 
     Args:
-      data_acquisition_and_control_layer: The layer for communicating with the
-        specific robotic setup.
-      task_logic_layer: The layer in charge of defining the task.
+      device_layer: The layer for communicating with the specific robotic setup.
+      task_layer: The layer in charge of defining the task.
       environment_reset: The `EnvironmentReset` specifying the function to be
         called at environment reset and the default environment reset
         configuration.
@@ -139,12 +146,53 @@ class Environment(gdmr_env.Environment):
         warning logged if the action is outside the spec. If `RAISE_ERROR`, an
         error will be raised if the action is outside the  spec. If `IGNORE`,
         the action will be passed through. Default is `RAISE_ERROR`.
+      data_acquisition_and_control_layer: DEPRECATED. Use `device_layer`.
+      task_logic_layer: DEPRECATED. Use `task_layer`.
     """
+    # Handle deprecated kwarg names.
+    if data_acquisition_and_control_layer is not None:
+      warnings.warn(
+          "The 'data_acquisition_and_control_layer' argument was renamed to "
+          "'device_layer' (semantics are unchanged). This argument is "
+          "deprecated, use 'device_layer' instead.",
+          DeprecationWarning,
+          stacklevel=2,
+      )
+      if device_layer is not None:
+        raise ValueError(
+            "Cannot specify both 'data_acquisition_and_control_layer' and "
+            "'device_layer'. Use 'device_layer' only."
+        )
+      device_layer = data_acquisition_and_control_layer
 
-    self._data_acquisition_and_control_layer = (
-        data_acquisition_and_control_layer
-    )
-    self._task_logic_layer = task_logic_layer
+    if task_logic_layer is not None:
+      warnings.warn(
+          "The 'task_logic_layer' argument was renamed to 'task_layer' "
+          "(semantics are unchanged). This argument is deprecated, use "
+          "'task_layer' instead.",
+          DeprecationWarning,
+          stacklevel=2,
+      )
+      if task_layer is not None:
+        raise ValueError(
+            "Cannot specify both 'task_logic_layer' and 'task_layer'. "
+            "Use 'task_layer' only."
+        )
+      task_layer = task_logic_layer
+
+    if device_layer is None:
+      raise TypeError(
+          "Environment.__init__ missing required keyword argument: "
+          "'device_layer' (or deprecated 'data_acquisition_and_control_layer')"
+      )
+    if task_layer is None:
+      raise TypeError(
+          "Environment.__init__ missing required keyword argument: "
+          "'task_layer' (or deprecated 'task_logic_layer')"
+      )
+
+    self._device_layer = device_layer
+    self._task_layer = task_layer
     self._end_of_episode_handler = (
         end_of_episode_handler or EndOfEpisodeHandler()
     )
@@ -152,21 +200,21 @@ class Environment(gdmr_env.Environment):
     self._environment_closer = environment_closer
     self._action_spec_enforcement_option = action_spec_enforcement_option
 
-    # Before assigning the adapters, validate the specs on the task logic layer
-    # and the DACL.
-    self._validate_dacl_and_ttl_specs()
+    # Before assigning the adapters, validate the specs on the task layer
+    # and the device layer.
+    self._validate_device_and_task_layer_specs()
 
-    ttl_commands_spec = self._task_logic_layer.commands_spec(
-        self._data_acquisition_and_control_layer.commands_spec()
+    task_layer_commands_spec = self._task_layer.commands_spec(
+        self._device_layer.commands_spec()
     )
-    ttl_features_spec = self._task_logic_layer.features_spec(
-        self._data_acquisition_and_control_layer.measurements_spec()
+    task_layer_features_spec = self._task_layer.features_spec(
+        self._device_layer.measurements_spec()
     )
 
     if action_space_adapter is None:
       action_space_adapter = (
           pass_through_action_space_adapter.PassThroughActionSpaceAdapter(
-              commands_spec=ttl_commands_spec
+              commands_spec=task_layer_commands_spec
           )
       )
     self._action_space_adapter = action_space_adapter
@@ -174,7 +222,7 @@ class Environment(gdmr_env.Environment):
     if observation_space_adapter is None:
       observation_space_adapter = (
           default_observation_space_adapter.DefaultObservationSpaceAdapter(
-              task_features_spec=ttl_features_spec,
+              task_features_spec=task_layer_features_spec,
               selected_features=None,
               renamed_features=None,
               observation_type_mapper=None,
@@ -189,8 +237,8 @@ class Environment(gdmr_env.Environment):
     self._should_finalize_episode = False
     self._timestep_spec = gdmr_types.TimeStepSpec(
         step_type=gdmr_types.STEP_TYPE_SPEC,
-        reward=self._task_logic_layer.reward_spec(),
-        discount=self._task_logic_layer.discount_spec(),
+        reward=self._task_layer.reward_spec(),
+        discount=self._task_layer.discount_spec(),
         # The observation spec corresponds to the one exposed by the adapter.
         observation=self._observation_space_adapter.observation_spec(),
     )
@@ -217,9 +265,9 @@ class Environment(gdmr_env.Environment):
     if self._should_finalize_episode:
       self._finalize_episode()
     self._environment_reset.do_reset(options)
-    self._task_logic_layer.perform_reset()
-    measurements = self._data_acquisition_and_control_layer.begin_stepping()
-    features = self._task_logic_layer.compute_all_features(measurements)
+    self._task_layer.perform_reset()
+    measurements = self._device_layer.begin_stepping()
+    features = self._task_layer.compute_all_features(measurements)
     observations = self._compute_observations_from_features(features)
 
     self._last_timestep = self._restart(observation=observations)
@@ -245,18 +293,16 @@ class Environment(gdmr_env.Environment):
 
     # Process the action to obtain a command.
     commands = self._compute_commands_from_agent_action(action)
-    commands = self._task_logic_layer.compute_final_commands(commands)
-    measurements = self._data_acquisition_and_control_layer.step(commands)
+    commands = self._task_layer.compute_final_commands(commands)
+    measurements = self._device_layer.step(commands)
 
     # Compute all the features.
-    features = self._task_logic_layer.compute_all_features(measurements)
+    features = self._task_layer.compute_all_features(measurements)
 
     # Compute the elements of the timestep.
-    reward = self._task_logic_layer.compute_reward(features)
-    termination_state = self._task_logic_layer.check_for_termination(features)
-    discount = self._task_logic_layer.compute_discount(
-        features, termination_state
-    )
+    reward = self._task_layer.compute_reward(features)
+    termination_state = self._task_layer.check_for_termination(features)
+    discount = self._task_layer.compute_discount(features, termination_state)
 
     observations = self._compute_observations_from_features(features)
 
@@ -278,9 +324,9 @@ class Environment(gdmr_env.Environment):
     return self._last_timestep
 
   def _finalize_episode(self) -> None:
-    self._data_acquisition_and_control_layer.end_stepping()
-    # It's crucial to call `end_stepping` on the dacl before invoking the end
-    # of episode handler. This ensures no further `set_command` or
+    self._device_layer.end_stepping()
+    # It's crucial to call `end_stepping` on the device layer before invoking
+    # the end of episode handler. This ensures no further `set_command` or
     # `get_measurements` calls are made. In contrast, the end of episode
     # handler might interact with devices, requiring them to be informed
     # beforehand.
@@ -288,14 +334,38 @@ class Environment(gdmr_env.Environment):
     self._should_finalize_episode = False
 
   @property
-  def data_acquisition_and_control_layer(
-      self,
-  ) -> reaf_dacl.DataAcquisitionAndControlLayer:
-    return self._data_acquisition_and_control_layer
+  def device_layer(self) -> device_layer.DeviceLayer:
+    return self._device_layer
 
   @property
-  def task_logic_layer(self) -> reaf_tll.TaskLogicLayer:
-    return self._task_logic_layer
+  def data_acquisition_and_control_layer(
+      self,
+  ) -> dacl_module.DataAcquisitionAndControlLayer:
+    """DEPRECATED: Use `device_layer` instead."""
+    warnings.warn(
+        "'data_acquisition_and_control_layer' property was renamed to "
+        "'device_layer' (semantics are unchanged). This property is "
+        "deprecated, use 'device_layer' instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return cast(dacl_module.DataAcquisitionAndControlLayer, self._device_layer)
+
+  @property
+  def task_layer(self) -> task_layer.TaskLayer:
+    return self._task_layer
+
+  @property
+  def task_logic_layer(self) -> tll_module.TaskLogicLayer:
+    """DEPRECATED: Use `task_layer` instead."""
+    warnings.warn(
+        "'task_logic_layer' property was renamed to 'task_layer' (semantics "
+        "are unchanged). This property is deprecated, use 'task_layer' "
+        "instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return cast(tll_module.TaskLogicLayer, self._task_layer)
 
   @property
   def environment_reset(self) -> EnvironmentReset:
@@ -306,35 +376,29 @@ class Environment(gdmr_env.Environment):
     self._environment_reset = environment_reset
 
   def add_logger(self, logger: reaf_logger.Logger) -> None:
-    self._task_logic_layer.add_logger(logger)
+    self._task_layer.add_logger(logger)
 
   def remove_logger(self, logger: reaf_logger.Logger) -> None:
-    self._task_logic_layer.remove_logger(logger)
+    self._task_layer.remove_logger(logger)
 
-  def _validate_dacl_and_ttl_specs(self) -> None:
-    """Validates the specs on the task logic layer."""
-    # Validate the spec on the task logic layer.
-    self._task_logic_layer.validate_spec(
-        dacl_commands_spec=(
-            self._data_acquisition_and_control_layer.commands_spec()
-        ),
-        dacl_measurements_spec=(
-            self._data_acquisition_and_control_layer.measurements_spec()
-        ),
+  def _validate_device_and_task_layer_specs(self) -> None:
+    """Validates the specs on the task layer."""
+    # Validate the spec on the task layer.
+    self._task_layer.validate_spec(
+        dacl_commands_spec=(self._device_layer.commands_spec()),
+        dacl_measurements_spec=(self._device_layer.measurements_spec()),
     )
 
   def _validate_adapters_specs(self) -> None:
     # Collect the full commands and features spec and validate them against
     # the adapters.
     commands_spec = set(
-        self._task_logic_layer.commands_spec(
-            self._data_acquisition_and_control_layer.commands_spec()
+        self._task_layer.commands_spec(
+            self._device_layer.commands_spec()
         ).keys()
     )
     features_spec = set(
-        self._task_logic_layer.features_spec(
-            self._data_acquisition_and_control_layer.measurements_spec()
-        )
+        self._task_layer.features_spec(self._device_layer.measurements_spec())
     )
 
     # Check the action space adapter.

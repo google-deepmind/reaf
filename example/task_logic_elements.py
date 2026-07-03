@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Elements (processors, producers, etc) for the task logic layer."""
+"""Elements (processors, producers, etc) for the task layer."""
 
 from collections.abc import Callable, Mapping
 
@@ -81,7 +81,7 @@ class ReferenceProducer(features_producer.FeaturesProducer):
     Args:
       reference_producer: Callable that returns the current position reference.
         This will be called every time `compute_all_features` is called on the
-        TaskLogicLayer, i.e. at every environment step.
+        TaskLayer, i.e. at every environment step.
     """
     self._producer = reference_producer
 

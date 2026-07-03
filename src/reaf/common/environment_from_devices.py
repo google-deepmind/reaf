@@ -27,10 +27,10 @@ from reaf.common import device_sequence_coordinator
 from reaf.common import environment_reset_from_callable
 from reaf.common import maximum_steps_termination_checker
 from reaf.common import time_trigger
-from reaf.core import data_acquisition_and_control_layer
 from reaf.core import device
+from reaf.core import device_layer as dl_module
 from reaf.core import environment
-from reaf.core import task_logic_layer
+from reaf.core import task_layer as tl_module
 
 
 def environment_from_devices(
@@ -43,10 +43,11 @@ def environment_from_devices(
   """Creates an environment from a list of devices.
 
   This function creates a REAF environment with the following properties:
-  - The DACL will expose the specified list of devices.
-  - The DACL will provide a time measurement trigger with the specified
+  - The DeviceLayer will expose the specified list of devices.
+  - The DeviceLayer will provide a time measurement trigger with the specified
       control timestep.
-  - The TLL will not expose any additional command processor, feature producer
+  - The TaskLayer will not expose any additional command processor, feature
+  producer
       or reward provider.
   - If `episode_max_duration` is specified, the environment will be configured
       to terminate an episode after the specified duration.
@@ -66,7 +67,7 @@ def environment_from_devices(
   Returns:
     The REAF environment.
   """
-  dacl = data_acquisition_and_control_layer.DataAcquisitionAndControlLayer(
+  device_layer = dl_module.DeviceLayer(
       device_coordinator=device_sequence_coordinator.DeviceSequenceCoordinator(
           devices=devices, name=coordinator_name
       ),
@@ -81,7 +82,7 @@ def environment_from_devices(
             max_steps=episode_max_duration // control_timestep
         )
     )
-  tll = task_logic_layer.TaskLogicLayer(
+  task_layer = tl_module.TaskLayer(
       commands_processors=(),
       features_producers=(),
       termination_checkers=termination_checkers,
@@ -97,8 +98,8 @@ def environment_from_devices(
       else lambda _: None
   )
   return environment.Environment(
-      data_acquisition_and_control_layer=dacl,
-      task_logic_layer=tll,
+      device_layer=device_layer,
+      task_layer=task_layer,
       environment_reset=environment_reset_from_callable.EnvironmentResetFromCallable(
           environment_reset_fn
       ),
