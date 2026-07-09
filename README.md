@@ -2,7 +2,7 @@
 
 The Robotics Environment Authoring Framework (REAF) simplifies creating
 environments that adhere to the
-[GDM Robotics Environment interface](https://github.com/google-deepmind/gdm_robotics/interfaces/environment.py).
+[GDM Robotics Environment interface](https://github.com/google-deepmind/gdm_robotics/blob/main/src/gdm_robotics/interfaces/environment.py).
 
 ## How to install
 
@@ -32,7 +32,7 @@ components of a REAF environment are:
 
 1.  **Environment:** The top-level interface for interacting with the
     environment, conforming to the
-    [GDM Robotics Environment interface](https://github.com/google-deepmind/gdm_robotics/interfaces/environment.py).
+    [GDM Robotics Environment interface](https://github.com/google-deepmind/gdm_robotics/blob/main/src/gdm_robotics/interfaces/environment.py).
     It handles stepping, resetting, and action/observation specs.
 2.  **Task Logic Layer (TLL):** Responsible for defining the task itself,
     including reward calculation, termination conditions, features generation,
