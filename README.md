@@ -34,32 +34,34 @@ components of a REAF environment are:
     environment, conforming to the
     [GDM Robotics Environment interface](https://github.com/google-deepmind/gdm_robotics/blob/main/src/gdm_robotics/interfaces/environment.py).
     It handles stepping, resetting, and action/observation specs.
-2.  **Task Logic Layer (TLL):** Responsible for defining the task itself,
+2.  **Task Layer:** Responsible for defining the task itself,
     including reward calculation, termination conditions, features generation,
     and commands processing.
-3.  **Data Acquisition and Control Layer (DACL):** Interfaces with the physical
+3.  **Device Layer:** Interfaces with the physical
     or simulated robotic setup, managing commands to actuators and retrieving
     measurements from sensors.
 4.  **Adapters:** Bridge the gap between the abstract GDMR interfaces and the
-    specific requirements of the TLL. These adapters translate agent actions
-    into TLL commands and TLL features into agent observations.
+    specific requirements of the Task Layer. These adapters translate agent
+    actions into Task Layer commands and Task Layer features into agent
+    observations.
 5.  **Reset and End of Episode Handlers:** Support customized behavior during
     environment resets and episode termination.
 
 ### Environment
 
 The `Environment` class serves as the primary interface for interacting with the
-robotic environment. It coordinates the interactions between the TLL and DACL,
-manages the environment's state, and handles stepping through the environment.
+robotic environment. It coordinates the interactions between the Task Layer and
+Device Layer, manages the environment's state, and handles stepping through the
+environment.
 Key functionalities include:
 
 *   **`reset_with_options()`:** Resets the environment to a new initial state
-    based on the provided options. This involves resetting the DACL, computing
-    initial features and observations.
+    based on the provided options. This involves resetting the Device Layer, 
+    computing initial features and observations.
 *   **`step()`:** Advances the environment by one step. This method takes an
-    agent action, processes it into commands, steps the DACL, computes features,
-    reward, discount, termination conditions, and new observations, and returns
-    a `TimeStep` object containing this information.
+    agent action, processes it into commands, steps the Device Layer, computes
+    features, reward, discount, termination conditions, and new observations,
+    and returns a `TimeStep` object containing this information.
 *   **`action_spec()`:** Returns the specification for valid agent actions. This
     is determined by the `ActionSpaceAdapter`.
 *   **`timestep_spec()`:** Returns the specification for the `TimeStep` objects
@@ -67,17 +69,17 @@ Key functionalities include:
 *   **Logging:** Facilitates adding and removing loggers to monitor internal
     operations.
 
-### Task Logic Layer (TLL)
+### Task Layer
 
-The TLL defines the logic and rules governing the robotic task. It comprises
-several core components:
+The Task Layer defines the logic and rules governing the robotic task. It
+comprises several core components:
 
 *   **`FeaturesProducer`:** Generates additional features based on existing
-    features and measurements from the DACL. Each producer has a
+    features and measurements from the Device Layer. Each producer has a
     `produced_features_spec()` defining the features it generates and
     `required_features_keys()` indicating the features it depends on.
-*   **`CommandsProcessor`:** Modifies commands before they are sent to the DACL.
-    Processors can transform, filter, or augment commands. The
+*   **`CommandsProcessor`:** Modifies commands before they are sent to the
+    Device Layer. Processors can transform, filter, or augment commands. The
     `consumed_commands_spec()` describes the commands accepted by the processor,
     and `produced_commands_keys()` defines the output commands.
 *   **`RewardProvider`:** Calculates the reward signal based on the current
@@ -94,25 +96,25 @@ several core components:
     `record_features()`, and `record_commands_processing()` are called at
     specific points in the environment's lifecycle.
 
-The TLL also provides methods to:
+The Task Layer also provides methods to:
 
 *   **`compute_all_features()`:** Computes all features based on measurements
-    from the DACL and the output of `FeaturesProducer`s.
+    from the Device Layer and the output of `FeaturesProducer`s.
 *   **`compute_final_commands()`:** Processes the policy's commands using the
-    `CommandsProcessor`s and outputs the DACL command.
+    `CommandsProcessor`s and outputs the Device Layer command.
 *   **`compute_reward()`:** Calculates the reward using the `RewardProvider`.
 *   **`check_for_termination()`:** Checks termination conditions using
     `TerminationChecker`s.
 *   **`compute_discount()`:** Computes the discount using the
     `DiscountProvider`.
-*   **`validate_spec()`:** Verifies the consistency of the specs across the TLL
-    and DACL.
+*   **`validate_spec()`:** Verifies the consistency of the specs across the Task
+    Layer and Device Layer.
 
-### Data Acquisition and Control Layer (DACL)
+### Device Layer
 
-The DACL serves as the bridge between the REAF environment and the robotic
+The Device Layer serves as the bridge between the REAF environment and the robotic
 hardware. It's responsible for sending commands to the robot and receiving
-measurements from sensors. The DACL is built around:
+measurements from sensors. The Device Layer is built around:
 
 *   **`Device`:** Represents a single hardware component (e.g., robot arm,
     camera). It provides methods like `set_commands()` and `get_measurements()`
@@ -122,9 +124,9 @@ measurements from sensors. The DACL is built around:
     management through `start()` and `stop()` methods and synchronization points
     through `before_set_commands()` and `before_get_measurements()`.
 
-The DACL's key functions are:
+The Device Layer's key functions are:
 
-*   **`begin_stepping()`:** Initializes the DACL and returns the initial
+*   **`begin_stepping()`:** Initializes the Device Layer and returns the initial
     measurements.
 *   **`step()`:** Sends commands to the devices, retrieves new measurements, and
     returns them.
@@ -137,12 +139,12 @@ The DACL's key functions are:
 ### Adapters
 
 REAF utilizes adapters to translate between the generic agent interface and the
-specific format required by the TLL.
+specific format required by the Task Layer.
 
 *   **`ActionSpaceAdapter`:** Converts the agent's actions into a commands
-    dictionary understood by the TLL.
-*   **`ObservationSpaceAdapter`:** Transforms the features generated by the TLL
-    into observations suitable for the agent.
+    dictionary understood by the Task Layer.
+*   **`ObservationSpaceAdapter`:** Transforms the features generated by the Task
+    Layer into observations suitable for the agent.
 
 ### Reset and End of Episode Handler
 
