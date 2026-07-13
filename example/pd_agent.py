@@ -52,15 +52,15 @@ class PdAgent(gdmr_policy.Policy[np.ndarray]):
 
   def initial_state(
       self,
-  ) -> gdmr_types.StateStructure[np.ndarray]:
+  ) -> gdmr_types.StateStructure[np.ndarray]:  # pyrefly: ignore[invalid-type-var]
     """Returns the policy initial state."""
     return self._dummy_state
 
   def step(
       self,
       timestep: dm_env.TimeStep,
-      prev_state: gdmr_types.StateStructure[np.ndarray],
-  ) -> tuple[
+      prev_state: gdmr_types.StateStructure[np.ndarray],  # pyrefly: ignore[invalid-type-var]
+  ) -> tuple[  # pyrefly: ignore[invalid-type-var]
       tuple[
           gdmr_types.ActionType,
           gdmr_types.ExtraOutputStructure[np.ndarray],
@@ -89,7 +89,7 @@ class PdAgent(gdmr_policy.Policy[np.ndarray]):
 
     return (action, {}), self._dummy_state
 
-  def step_spec(self, timestep_spec: gdmr_types.TimeStepSpec) -> tuple[
+  def step_spec(self, timestep_spec: gdmr_types.TimeStepSpec) -> tuple[  # pyrefly: ignore[invalid-type-var]
       tuple[gdmr_types.ActionSpec, gdmr_types.ExtraOutputSpec],
       gdmr_types.StateSpec,
   ]:

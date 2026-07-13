@@ -53,8 +53,8 @@ class TreeSpecValidationAssertionsTest(
   )
   def test_assert_tree_matches_spec_success(
       self,
-      tree_structure: tree.Structure[gdmr_types.ArrayType],
-      spec: tree.Structure[specs.Array],
+      tree_structure: tree.Structure[gdmr_types.ArrayType],  # pyrefly: ignore[invalid-type-var]
+      spec: tree.Structure[specs.Array],  # pyrefly: ignore[invalid-type-var]
   ):
     self.assert_tree_matches_spec(tree_structure, spec)
 
@@ -74,8 +74,8 @@ class TreeSpecValidationAssertionsTest(
   @unittest.expectedFailure
   def test_assert_tree_matches_spec_failure(
       self,
-      tree_structure: tree.Structure[gdmr_types.ArrayType],
-      spec: tree.Structure[specs.Array],
+      tree_structure: tree.Structure[gdmr_types.ArrayType],  # pyrefly: ignore[invalid-type-var]
+      spec: tree.Structure[specs.Array],  # pyrefly: ignore[invalid-type-var]
   ):
     self.assert_tree_matches_spec(tree_structure, spec)
 

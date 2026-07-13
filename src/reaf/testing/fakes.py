@@ -190,7 +190,7 @@ class FakeDevice(device.Device):
       measurements_spec: Mapping[str, specs.Array] | None = None,
   ):
     if commands_spec is None:
-      commands_spec = {
+      commands_spec = {  # pyrefly: ignore[bad-assignment]
           f"{name}_{test_specs.random_string()}": test_specs.random_array_spec()
       }
     if measurements_spec is None:
@@ -198,7 +198,7 @@ class FakeDevice(device.Device):
           f"{name}_{test_specs.random_string()}": test_specs.random_array_spec()
       }
     self._name = name
-    self._commands_spec = commands_spec
+    self._commands_spec = commands_spec  # pyrefly: ignore[invalid-type-var]
     self._measuremets_spec = measurements_spec
     self.recorded_commands = []
     self.returned_measurements = []
@@ -210,7 +210,7 @@ class FakeDevice(device.Device):
 
   @override
   def commands_spec(self) -> Mapping[str, gdmr_types.AnyArraySpec]:
-    return self._commands_spec
+    return self._commands_spec  # pyrefly: ignore[bad-return]
 
   @override
   def measurements_spec(self) -> Mapping[str, specs.Array]:
@@ -224,7 +224,7 @@ class FakeDevice(device.Device):
   def get_measurements(self) -> Mapping[str, gdmr_types.ArrayType]:
     measurements = test_specs.valid_dict_value(self._measuremets_spec)
     self.returned_measurements.append(measurements)
-    return measurements
+    return measurements  # pyrefly: ignore[bad-return]
 
 
 class FakeDeviceCoordinator(device_coordinator.DeviceCoordinator):
@@ -263,14 +263,14 @@ class RandomRewardProvider(reaf_reward_provider.RewardProvider):
     return self._name
 
   @override
-  def reward_spec(self) -> tree.Structure[specs.Array]:
+  def reward_spec(self) -> tree.Structure[specs.Array]:  # pyrefly: ignore[invalid-type-var]
     return specs.Array(shape=(1,), dtype=np.float32)
 
   @override
   def compute_reward(
       self, required_features: Mapping[str, gdmr_types.ArrayType]
-  ) -> tree.Structure[gdmr_types.ArrayType]:
-    return np.random.random(size=(1,)).astype(np.float32)
+  ) -> tree.Structure[gdmr_types.ArrayType]:  # pyrefly: ignore[invalid-type-var]
+    return np.random.random(size=(1,)).astype(np.float32)  # pyrefly: ignore[bad-return]
 
   @override
   def required_features_keys(self) -> set[str]:
@@ -340,7 +340,7 @@ class CommandRenamer(reaf_commands_processor.CommandsProcessor):
       low_to_high_level_mapping: dict[str, str],
       dacl_spec: Mapping[str, gdmr_types.AnyArraySpec],
   ):
-    self._consumed_commands_spec = {
+    self._consumed_commands_spec = {  # pyrefly: ignore[invalid-type-var]
         high_level_name: dacl_spec[low_level_name]
         for low_level_name, high_level_name in low_to_high_level_mapping.items()
     }

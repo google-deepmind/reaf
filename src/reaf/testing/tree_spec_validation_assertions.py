@@ -36,8 +36,8 @@ class TreeSpecValidationAssertions(unittest.TestCase):
 
   def assert_tree_matches_spec(
       self,
-      tree_structure: tree.Structure[gdmr_types.ArrayType],
-      spec: tree.Structure[specs.Array],
+      tree_structure: tree.Structure[gdmr_types.ArrayType],  # pyrefly: ignore[invalid-type-var]
+      spec: tree.Structure[specs.Array],  # pyrefly: ignore[invalid-type-var]
   ):
     """Check that the tree_structure matches the spec.
 
@@ -46,13 +46,13 @@ class TreeSpecValidationAssertions(unittest.TestCase):
       spec: the spec for the tree_structure that should be validated.
     """
     if tree.is_nested(tree_structure):
-      if len(tree_structure) != len(spec):
+      if len(tree_structure) != len(spec):  # pyrefly: ignore[bad-argument-type]
         self.fail(
             f"Spec mismatch. Spec: {spec} and the tree_structure:"
             f" {tree_structure}"
         )
-      for idx, sub_tree in enumerate(tree_structure):
-        self.assert_tree_matches_spec(sub_tree, spec[idx])
+      for idx, sub_tree in enumerate(tree_structure):  # pyrefly: ignore[bad-argument-type]
+        self.assert_tree_matches_spec(sub_tree, spec[idx])  # pyrefly: ignore[bad-argument-type, bad-index]
     elif isinstance(spec, specs.Array):
       try:
         spec.validate(tree_structure)

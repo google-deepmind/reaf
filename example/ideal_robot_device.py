@@ -52,7 +52,7 @@ class IdealRobotDevice(device.Device):
 
   @override
   def commands_spec(self) -> dict[str, gdmr_types.AnyArraySpec]:
-    return {
+    return {  # pyrefly: ignore[bad-return]
         ROBOT_COMMAND_CURRENT_KEY: specs.BoundedArray(
             shape=(self._robot.dofs,),
             dtype=np.float32,
@@ -62,7 +62,7 @@ class IdealRobotDevice(device.Device):
     }
 
   @override
-  def get_measurements(self) -> dict[str, np.ndarray]:
+  def get_measurements(self) -> dict[str, np.ndarray]:  # pyrefly: ignore[bad-override]
     position, velocity = self._robot.get_state()
     return {
         ROBOT_MEASUREMENT_POSITION_KEY: position.astype(np.float32),
@@ -70,6 +70,6 @@ class IdealRobotDevice(device.Device):
     }
 
   @override
-  def set_commands(self, commands: Mapping[str, np.ndarray]) -> None:
+  def set_commands(self, commands: Mapping[str, np.ndarray]) -> None:  # pyrefly: ignore[bad-override]
     currents = commands[ROBOT_COMMAND_CURRENT_KEY]
     self._robot.set_currents(currents)
