@@ -42,7 +42,7 @@ class TimestampFeaturesProducer(features_producer.FeaturesProducer):
   def produce_features(
       self, required_features: Mapping[str, gdmr_types.ArrayType]
   ) -> Mapping[str, gdmr_types.ArrayType]:
-    return {self._timestamp_key: np.array(time.time_ns(), dtype=np.int64)}
+    return {self._timestamp_key: np.array(time.time_ns(), dtype=np.int64)}  # pyrefly: ignore[bad-return]
 
   @override
   def produced_features_spec(self) -> Mapping[str, specs.Array]:

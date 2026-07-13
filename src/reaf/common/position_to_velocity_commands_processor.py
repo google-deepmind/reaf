@@ -104,7 +104,7 @@ class PositionToVelocityCommandsProcessor(
   ) -> Mapping[str, gdmr_types.ArrayType]:
     self._current_velocity_command = (
         compute_velocity_command.compute_velocity_command(
-            desired_positions=consumed_commands[
+            desired_positions=consumed_commands[  # pyrefly: ignore[bad-argument-type]
                 self._config.consumed_position_command_key
             ],
             current_positions=self._current_position,
@@ -116,14 +116,14 @@ class PositionToVelocityCommandsProcessor(
             control_timestep=self._config.control_timestep,
         )
     )
-    return {
+    return {  # pyrefly: ignore[bad-return]
         self._config.produced_velocity_command_key: (
             self._current_velocity_command
         )
     }
 
   @override
-  def consumed_commands_spec(self) -> dict[str, specs.BoundedArray]:
+  def consumed_commands_spec(self) -> dict[str, specs.BoundedArray]:  # pyrefly: ignore[bad-override]
     return {
         self._config.consumed_position_command_key: (
             self._config.consumed_position_command_spec
@@ -178,6 +178,6 @@ class PositionToVelocityCommandsProcessor(
     self._maybe_validate_reference_feature(
         features[self._config.position_reference_feature_key]
     )
-    self._current_position = features[
+    self._current_position = features[  # pyrefly: ignore[bad-assignment]
         self._config.position_reference_feature_key
     ]

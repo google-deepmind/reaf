@@ -54,7 +54,7 @@ class DefaultDiscountProvider(discount_provider.DiscountProvider):
       self,
       unused_required_features: Mapping[str, gdmr_types.ArrayType],
       termination_state: termination_checker.TerminationResult,
-  ) -> tree.Structure[gdmr_types.ArrayType]:
+  ) -> tree.Structure[gdmr_types.ArrayType]:  # pyrefly: ignore[invalid-type-var]
     """Computes the discount.
 
     Args:
@@ -66,11 +66,11 @@ class DefaultDiscountProvider(discount_provider.DiscountProvider):
       The discount.
     """
     if termination_state == termination_state.TERMINATE:
-      return np.asarray(0).astype(self._spec.dtype)
+      return np.asarray(0).astype(self._spec.dtype)  # pyrefly: ignore[bad-return]
     else:  # TRUNCATION or DO_NOT_TERMINATE
-      return np.asarray(1.0).astype(self._spec.dtype)
+      return np.asarray(1.0).astype(self._spec.dtype)  # pyrefly: ignore[bad-return]
 
-  def discount_spec(self) -> tree.Structure[specs.Array]:
+  def discount_spec(self) -> tree.Structure[specs.Array]:  # pyrefly: ignore[invalid-type-var]
     """Returns the spec of the discount."""
     return self._spec
 

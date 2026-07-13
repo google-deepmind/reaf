@@ -35,17 +35,17 @@ class TestRewardProvider(reward_provider.RewardProvider):
   ):
     super().__init__()
     self._required_features_spec = required_features_spec
-    self._reward_callable = reward_callable
+    self._reward_callable = reward_callable  # pyrefly: ignore[invalid-type-var]
 
   def name(self) -> str:
     return 'test'
 
   def compute_reward(
       self, required_features: Mapping[str, gdmr_types.ArrayType]
-  ) -> reward_provider.RewardValue:
+  ) -> reward_provider.RewardValue:  # pyrefly: ignore[invalid-type-var]
     return self._reward_callable(required_features)
 
-  def reward_spec(self) -> reward_provider.RewardSpec:
+  def reward_spec(self) -> reward_provider.RewardSpec:  # pyrefly: ignore[invalid-type-var]
     dummy_features = tree.map_structure(
         lambda s: s.generate_value(), self._required_features_spec
     )

@@ -34,7 +34,7 @@ class DiscountProvider(abc.ABC):
       self,
       required_features: Mapping[str, gdmr_types.ArrayType],
       termination_state: termination_checker.TerminationResult,
-  ) -> tree.Structure[gdmr_types.ArrayType]:
+  ) -> tree.Structure[gdmr_types.ArrayType]:  # pyrefly: ignore[invalid-type-var]
     """Computes the discount.
 
     Args:
@@ -49,7 +49,7 @@ class DiscountProvider(abc.ABC):
     """
 
   @abc.abstractmethod
-  def discount_spec(self) -> tree.Structure[specs.Array]:
+  def discount_spec(self) -> tree.Structure[specs.Array]:  # pyrefly: ignore[invalid-type-var]
     """Returns the spec of the discount."""
 
   @abc.abstractmethod

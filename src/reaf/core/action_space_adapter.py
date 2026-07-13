@@ -30,12 +30,12 @@ class ActionSpaceAdapter(abc.ABC):
 
   @abc.abstractmethod
   def commands_from_environment_action(
-      self, environment_action: gdmr_types.ActionType
+      self, environment_action: gdmr_types.ActionType  # pyrefly: ignore[invalid-type-var]
   ) -> Mapping[str, gdmr_types.ArrayType]:
     """Converts the environment action into commands accepted by REAF."""
 
   @abc.abstractmethod
-  def action_spec(self) -> gdmr_types.ActionSpec:
+  def action_spec(self) -> gdmr_types.ActionSpec:  # pyrefly: ignore[invalid-type-var]
     """Returns the action spec exposed by the environment."""
 
   @abc.abstractmethod

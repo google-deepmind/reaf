@@ -119,7 +119,7 @@ class StackFeaturesProducer(features_producer.FeaturesProducer):
         self._stacked_features[config.stacked_feature_name][0] = (
             required_features[config.feature_name]
         )
-    return self._stacked_features
+    return self._stacked_features  # pyrefly: ignore[bad-return]
 
   def produced_features_spec(self) -> Mapping[str, specs.Array]:
     """Returns the spec of the features produced by this producer."""

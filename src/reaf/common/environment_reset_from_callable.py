@@ -22,7 +22,7 @@ class EnvironmentResetFromCallable(reaf_environment.EnvironmentReset):
   """Creates an EnvironmentReset from a callable."""
 
   def __init__(self, reset_callable: Callable[[gdmr_env.ResetOptions], None]):
-    self._callable = reset_callable
+    self._callable = reset_callable  # pyrefly: ignore[invalid-type-var]
 
   def do_reset(self, reset_options: gdmr_env.ResetOptions):
     self._callable(reset_options)

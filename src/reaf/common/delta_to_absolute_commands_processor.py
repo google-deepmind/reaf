@@ -83,7 +83,7 @@ class DeltaToAbsoluteCommandsProcessor(
   def process_commands(
       self, consumed_commands: Mapping[str, gdmr_types.ArrayType]
   ) -> Mapping[str, gdmr_types.ArrayType]:
-    return {
+    return {  # pyrefly: ignore[bad-return]
         self._config.produced_command_key: (
             self._reference
             + consumed_commands[self._config.consumed_command_key]
@@ -91,7 +91,7 @@ class DeltaToAbsoluteCommandsProcessor(
     }
 
   @override
-  def consumed_commands_spec(self) -> dict[str, specs.BoundedArray]:
+  def consumed_commands_spec(self) -> dict[str, specs.BoundedArray]:  # pyrefly: ignore[bad-override]
     return {
         self._config.consumed_command_key: self._config.consumed_command_spec
     }
@@ -134,4 +134,4 @@ class DeltaToAbsoluteCommandsProcessor(
     self._maybe_validate_reference_feature(
         features[self._config.reference_feature_key]
     )
-    self._reference = features[self._config.reference_feature_key]
+    self._reference = features[self._config.reference_feature_key]  # pyrefly: ignore[bad-assignment]

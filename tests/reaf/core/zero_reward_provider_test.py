@@ -38,7 +38,7 @@ class ZeroRewardProviderTest(
 
   def test_reward_spec(self):
     reward_provider = zero_reward_provider.ZeroRewardProvider()
-    self.assert_tree_matches_spec(
+    self.assert_tree_matches_spec(  # pyrefly: ignore[bad-specialization]
         tree_structure=reward_provider.compute_reward({}),
         spec=reward_provider.reward_spec(),
     )

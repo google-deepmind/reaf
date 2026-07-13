@@ -44,14 +44,14 @@ class OutOfBoundsTerminationChecker(termination_checker.TerminationChecker):
         out of bounds.
     """
     self._name = name
-    self._feature_bounds = feature_bounds
+    self._feature_bounds = feature_bounds  # pyrefly: ignore[invalid-type-var]
     self._termination_result = termination_result
 
   def name(self) -> str:
     """Returns the name of the checker."""
     return self._name
 
-  def check_termination(
+  def check_termination(  # pyrefly: ignore[bad-override]
       self, required_features: Mapping[str, np.ndarray]
   ) -> termination_checker.TerminationResult:
     """Checks if any feature is out of bounds."""

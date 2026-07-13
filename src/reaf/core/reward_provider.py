@@ -44,7 +44,7 @@ class _RewardProvider(abc.ABC):
   @abc.abstractmethod
   def compute_reward(
       self, required_features: Mapping[str, gdmr_types.ArrayType]
-  ) -> RewardValue:
+  ) -> RewardValue:  # pyrefly: ignore[invalid-type-var]
     """Computes the reward.
 
     Args:
@@ -56,7 +56,7 @@ class _RewardProvider(abc.ABC):
     """
 
   @abc.abstractmethod
-  def reward_spec(self) -> RewardSpec:
+  def reward_spec(self) -> RewardSpec:  # pyrefly: ignore[invalid-type-var]
     """Returns the spec of the reward."""
 
   @abc.abstractmethod
@@ -84,40 +84,40 @@ class RewardProvider(_RewardProvider):
   methods defined in the interface _RewardProvider.
   """
 
-  def __add__(self, other: RewardProviderOrValue):
+  def __add__(self, other: RewardProviderOrValue):  # pyrefly: ignore[invalid-type-var]
     return BinaryOperationRewardProvider(operator.add, self, other)
 
-  def __radd__(self, other: RewardProviderOrValue):
+  def __radd__(self, other: RewardProviderOrValue):  # pyrefly: ignore[invalid-type-var]
     return BinaryOperationRewardProvider(operator.add, other, self)
 
-  def __sub__(self, other: RewardProviderOrValue):
+  def __sub__(self, other: RewardProviderOrValue):  # pyrefly: ignore[invalid-type-var]
     return BinaryOperationRewardProvider(operator.sub, self, other)
 
-  def __rsub__(self, other: RewardProviderOrValue):
+  def __rsub__(self, other: RewardProviderOrValue):  # pyrefly: ignore[invalid-type-var]
     return BinaryOperationRewardProvider(operator.sub, other, self)
 
-  def __mul__(self, other: RewardProviderOrValue):
+  def __mul__(self, other: RewardProviderOrValue):  # pyrefly: ignore[invalid-type-var]
     return BinaryOperationRewardProvider(operator.mul, self, other)
 
-  def __rmul__(self, other: RewardProviderOrValue):
+  def __rmul__(self, other: RewardProviderOrValue):  # pyrefly: ignore[invalid-type-var]
     return BinaryOperationRewardProvider(operator.mul, other, self)
 
-  def __truediv__(self, other: RewardProviderOrValue):
+  def __truediv__(self, other: RewardProviderOrValue):  # pyrefly: ignore[invalid-type-var]
     return BinaryOperationRewardProvider(operator.truediv, self, other)
 
-  def __rtruediv__(self, other: RewardProviderOrValue):
+  def __rtruediv__(self, other: RewardProviderOrValue):  # pyrefly: ignore[invalid-type-var]
     return BinaryOperationRewardProvider(operator.truediv, other, self)
 
-  def __floordiv__(self, other: RewardProviderOrValue):
+  def __floordiv__(self, other: RewardProviderOrValue):  # pyrefly: ignore[invalid-type-var]
     return BinaryOperationRewardProvider(operator.floordiv, self, other)
 
-  def __rfloordiv__(self, other: RewardProviderOrValue):
+  def __rfloordiv__(self, other: RewardProviderOrValue):  # pyrefly: ignore[invalid-type-var]
     return BinaryOperationRewardProvider(operator.floordiv, other, self)
 
-  def __pow__(self, other: RewardProviderOrValue):
+  def __pow__(self, other: RewardProviderOrValue):  # pyrefly: ignore[invalid-type-var]
     return BinaryOperationRewardProvider(operator.pow, self, other)
 
-  def __rpow__(self, other: RewardProviderOrValue):
+  def __rpow__(self, other: RewardProviderOrValue):  # pyrefly: ignore[invalid-type-var]
     return BinaryOperationRewardProvider(operator.pow, other, self)
 
   def __getitem__(self, index: slice):
@@ -130,7 +130,7 @@ class RewardProvider(_RewardProvider):
 class ConstantRewardProvider(RewardProvider):
   """A RewardProvider that always returns the same reward."""
 
-  def __init__(self, reward: RewardValue):
+  def __init__(self, reward: RewardValue):  # pyrefly: ignore[invalid-type-var]
     super().__init__()
     self._reward = reward
 
@@ -139,10 +139,10 @@ class ConstantRewardProvider(RewardProvider):
 
   def compute_reward(
       self, required_features: Mapping[str, gdmr_types.ArrayType]
-  ) -> RewardValue:
+  ) -> RewardValue:  # pyrefly: ignore[invalid-type-var]
     return self._reward
 
-  def reward_spec(self) -> RewardSpec:
+  def reward_spec(self) -> RewardSpec:  # pyrefly: ignore[invalid-type-var]
     return tree.map_structure(
         lambda v: specs.Array(v.shape, v.dtype), self._reward
     )
@@ -157,8 +157,8 @@ class BinaryOperationRewardProvider(RewardProvider):
   def __init__(
       self,
       op: BinaryOperator,
-      first_reward_provider: RewardProviderOrValue,
-      second_reward_provider: RewardProviderOrValue,
+      first_reward_provider: RewardProviderOrValue,  # pyrefly: ignore[invalid-type-var]
+      second_reward_provider: RewardProviderOrValue,  # pyrefly: ignore[invalid-type-var]
   ):
     super().__init__()
     if not isinstance(first_reward_provider, RewardProvider):
@@ -197,7 +197,7 @@ class BinaryOperationRewardProvider(RewardProvider):
 
   def compute_reward(
       self, required_features: Mapping[str, gdmr_types.ArrayType]
-  ) -> RewardValue:
+  ) -> RewardValue:  # pyrefly: ignore[invalid-type-var]
     first_required_features = {
         k: v
         for k, v in required_features.items()
@@ -214,7 +214,7 @@ class BinaryOperationRewardProvider(RewardProvider):
         self._second_reward_provider.compute_reward(second_required_features),
     )
 
-  def reward_spec(self) -> RewardSpec:
+  def reward_spec(self) -> RewardSpec:  # pyrefly: ignore[invalid-type-var]
     return self._reward_spec
 
   def required_features_keys(self) -> set[str]:
@@ -230,7 +230,7 @@ class BinaryOperationRewardProvider(RewardProvider):
 class GetItemOperationRewardProvider(RewardProvider):
   """Extracts a slice from the result of a reward provider."""
 
-  def __init__(self, reward_provider: RewardProviderOrValue, index: slice):
+  def __init__(self, reward_provider: RewardProviderOrValue, index: slice):  # pyrefly: ignore[invalid-type-var]
     super().__init__()
     if not isinstance(reward_provider, RewardProvider):
       reward_provider = ConstantRewardProvider(reward_provider)
@@ -242,13 +242,13 @@ class GetItemOperationRewardProvider(RewardProvider):
 
   def compute_reward(
       self, required_features: Mapping[str, gdmr_types.ArrayType]
-  ) -> RewardValue:
+  ) -> RewardValue:  # pyrefly: ignore[invalid-type-var]
     return tree.map_structure(
         lambda v: v[self._index],
         self._reward_provider.compute_reward(required_features),
     )
 
-  def reward_spec(self) -> RewardSpec:
+  def reward_spec(self) -> RewardSpec:  # pyrefly: ignore[invalid-type-var]
     return tree.map_structure(
         lambda s: specs.Array(np.empty(s.shape)[self._index].shape, s.dtype),
         self._reward_provider.reward_spec(),
@@ -264,7 +264,7 @@ class GetItemOperationRewardProvider(RewardProvider):
 class UnaryOperationRewardProvider(RewardProvider):
   """Applies a unary operator to the result of a reward provider."""
 
-  def __init__(self, op: UnaryOperator, reward_provider: RewardProviderOrValue):
+  def __init__(self, op: UnaryOperator, reward_provider: RewardProviderOrValue):  # pyrefly: ignore[invalid-type-var]
     super().__init__()
     if not isinstance(reward_provider, RewardProvider):
       reward_provider = ConstantRewardProvider(reward_provider)
@@ -277,12 +277,12 @@ class UnaryOperationRewardProvider(RewardProvider):
 
   def compute_reward(
       self, required_features: Mapping[str, gdmr_types.ArrayType]
-  ) -> RewardValue:
+  ) -> RewardValue:  # pyrefly: ignore[invalid-type-var]
     return tree.map_structure(
         self._op, self._reward_provider.compute_reward(required_features)
     )
 
-  def reward_spec(self) -> RewardSpec:
+  def reward_spec(self) -> RewardSpec:  # pyrefly: ignore[invalid-type-var]
     return self._reward_provider.reward_spec()
 
   def required_features_keys(self) -> set[str]:

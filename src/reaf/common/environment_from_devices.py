@@ -101,6 +101,6 @@ def environment_from_devices(
       device_layer=device_layer,
       task_layer=task_layer,
       environment_reset=environment_reset_from_callable.EnvironmentResetFromCallable(
-          environment_reset_fn
+          environment_reset_fn  # pyrefly: ignore[bad-argument-type]
       ),
   )

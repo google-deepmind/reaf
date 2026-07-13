@@ -54,17 +54,17 @@ class ExternalSignalSparseRewardProvider(reward_provider.RewardProvider):
   @override
   def compute_reward(
       self, required_features: Mapping[str, gdmr_types.ArrayType]
-  ) -> tree.Structure[gdmr_types.ArrayType]:
+  ) -> tree.Structure[gdmr_types.ArrayType]:  # pyrefly: ignore[invalid-type-var]
     """Returns the reward."""
     del required_features
 
     if self._event.is_set():
-      return np.ones(1)
+      return np.ones(1)  # pyrefly: ignore[bad-return]
 
-    return np.zeros(1)
+    return np.zeros(1)  # pyrefly: ignore[bad-return]
 
   @override
-  def reward_spec(self) -> tree.Structure[specs.Array]:
+  def reward_spec(self) -> tree.Structure[specs.Array]:  # pyrefly: ignore[invalid-type-var]
     """Returns the spec for a constant zero reward."""
     return specs.Array(shape=(1,), dtype=float)
 

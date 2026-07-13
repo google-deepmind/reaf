@@ -151,9 +151,9 @@ class EnvironmentTest(parameterized.TestCase):
     self.assertEqual(
         gdmr_types.TimeStepSpec(
             step_type=gdmr_types.STEP_TYPE_SPEC,
-            reward=expected_reward_spec,
-            discount=expected_discount_spec,
-            observation=expected_observation_spec,
+            reward=expected_reward_spec,  # pyrefly: ignore[bad-argument-type]
+            discount=expected_discount_spec,  # pyrefly: ignore[bad-argument-type]
+            observation=expected_observation_spec,  # pyrefly: ignore[bad-argument-type]
         ),
         environment.timestep_spec(),
     )
@@ -997,9 +997,9 @@ class EnvironmentTest(parameterized.TestCase):
     timestep = environment.step(agent_action)
     # Check equality of the timestep.
     expected_timestep = timestep_builder(
-        final_observation,
-        {"reward1": np.asarray(5.6).astype(np.float32)},
-        {"discount": np.asarray(0.9).astype(np.float32)},
+        final_observation,  # pyrefly: ignore[bad-argument-type]
+        {"reward1": np.asarray(5.6).astype(np.float32)},  # pyrefly: ignore[bad-argument-type]
+        {"discount": np.asarray(0.9).astype(np.float32)},  # pyrefly: ignore[bad-argument-type]
     )
     np.testing.assert_equal(timestep, expected_timestep)
 
@@ -1275,10 +1275,10 @@ class EnvironmentTest(parameterized.TestCase):
   )
   def test_zero_discount_and_reward_match_specs(
       self,
-      reward_spec: gdmr_types.RewardSpec,
-      discount_spec: gdmr_types.DiscountSpec,
-      expected_zero_reward: tree.Structure[gdmr_types.ArrayType],
-      expected_zero_discount: tree.Structure[gdmr_types.ArrayType],
+      reward_spec: gdmr_types.RewardSpec,  # pyrefly: ignore[invalid-type-var]
+      discount_spec: gdmr_types.DiscountSpec,  # pyrefly: ignore[invalid-type-var]
+      expected_zero_reward: tree.Structure[gdmr_types.ArrayType],  # pyrefly: ignore[invalid-type-var]
+      expected_zero_discount: tree.Structure[gdmr_types.ArrayType],  # pyrefly: ignore[invalid-type-var]
   ):
     ttl_mock = mock.create_autospec(reaf_tll.TaskLogicLayer, instance=True)
     ttl_mock.reward_spec.return_value = reward_spec
@@ -1598,7 +1598,7 @@ class EnvironmentTest(parameterized.TestCase):
         discount=specs.BoundedArray(
             shape=(1,), dtype=np.float32, minimum=0, maximum=1.0
         ),
-        observation={
+        observation={  # pyrefly: ignore[bad-argument-type]
             "observation1": specs.Array(shape=(3,), dtype=np.float32),
             "observation2": specs.Array(shape=(5,), dtype=np.int32),
             "feature1": specs.Array(shape=(3,), dtype=np.float32),
@@ -1720,7 +1720,7 @@ class EnvironmentLoggerIntegrationTest(absltest.TestCase):
     )
 
     environment.step(
-        test_specs.valid_primitive_value(environment.action_spec())
+        test_specs.valid_primitive_value(environment.action_spec())  # pyrefly: ignore[bad-argument-type]
     )
     self.assertEqual(
         logger_functions_called(),

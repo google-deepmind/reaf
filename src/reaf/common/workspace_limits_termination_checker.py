@@ -78,7 +78,7 @@ class WorkspaceLimitsTerminationChecker(termination_checker.TerminationChecker):
     self._added_z_tolerance = added_z_tolerance
 
   @property
-  def name(self) -> str:
+  def name(self) -> str:  # pyrefly: ignore[bad-override]
     return self._name
 
   def check_termination(

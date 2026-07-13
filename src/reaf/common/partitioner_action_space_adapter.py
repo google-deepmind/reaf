@@ -122,7 +122,7 @@ class PartitionerActionSpaceAdapter(action_space_adapter.ActionSpaceAdapter):
           )
 
   def commands_from_environment_action(
-      self, environment_action: gdmr_types.ActionType
+      self, environment_action: gdmr_types.ActionType  # pyrefly: ignore[invalid-type-var]
   ) -> Mapping[str, gdmr_types.ArrayType]:
     """Converts the environment action into commands accepts by REAF."""
     commands = {}
@@ -132,11 +132,11 @@ class PartitionerActionSpaceAdapter(action_space_adapter.ActionSpaceAdapter):
       else:
         end = info.start_index + info.length
       commands[info.command_key] = np.asarray(
-          environment_action[info.start_index : end]
+          environment_action[info.start_index : end]  # pyrefly: ignore[bad-index]
       )
     return commands
 
-  def action_spec(self) -> gdmr_types.ActionSpec:
+  def action_spec(self) -> gdmr_types.ActionSpec:  # pyrefly: ignore[invalid-type-var]
     """Returns the action spec exposed by the environment."""
     return self._action_spec
 

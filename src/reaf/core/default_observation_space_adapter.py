@@ -37,13 +37,13 @@ class ObservationTypeMapper(abc.ABC):
   @abc.abstractmethod
   def to_observation_spec(
       self, features_spec: Mapping[str, specs.Array]
-  ) -> gdmr_types.ObservationSpec:
+  ) -> gdmr_types.ObservationSpec:  # pyrefly: ignore[invalid-type-var]
     """Convert the features spec into the environment observation spec."""
 
   @abc.abstractmethod
   def to_observations(
       self, features: Mapping[str, gdmr_types.ArrayType]
-  ) -> tree.Structure[gdmr_types.ArrayType]:
+  ) -> tree.Structure[gdmr_types.ArrayType]:  # pyrefly: ignore[invalid-type-var]
     """Convert the features into the environment observations."""
 
 
@@ -57,15 +57,15 @@ class _DefaultObservationTypeMapper(ObservationTypeMapper):
 
   def to_observation_spec(
       self, features_spec: Mapping[str, specs.Array]
-  ) -> gdmr_types.ObservationSpec:
+  ) -> gdmr_types.ObservationSpec:  # pyrefly: ignore[invalid-type-var]
     """Returns the features spec, unmodified, as a `gdmr_types.ObservationSpec`."""
-    return features_spec
+    return features_spec  # pyrefly: ignore[bad-return]
 
   def to_observations(
       self, features: Mapping[str, gdmr_types.ArrayType]
-  ) -> tree.Structure[gdmr_types.ArrayType]:
+  ) -> tree.Structure[gdmr_types.ArrayType]:  # pyrefly: ignore[invalid-type-var]
     """Returns the features, unmodified, as a `tree.Structure`."""
-    return features
+    return features  # pyrefly: ignore[bad-return]
 
 
 class DefaultObservationSpaceAdapter(
@@ -119,7 +119,7 @@ class DefaultObservationSpaceAdapter(
           f' {max_float_dtype}'
       )
     self._max_float_dtype = max_float_dtype
-    self._max_bits = np.finfo(self._max_float_dtype).bits
+    self._max_bits = np.finfo(self._max_float_dtype).bits  # pyrefly: ignore[no-matching-overload]
     self._task_features_spec = task_features_spec
     self._selected_filter = selected_features
     self._renamed_features = renamed_features or ()
@@ -152,7 +152,7 @@ class DefaultObservationSpaceAdapter(
 
   def observations_from_features(
       self, features: Mapping[str, gdmr_types.ArrayType]
-  ) -> tree.Structure[gdmr_types.ArrayType]:
+  ) -> tree.Structure[gdmr_types.ArrayType]:  # pyrefly: ignore[invalid-type-var]
     """Converts the features into the final environment observations."""
     # 1. Filter the observations.
     if (selected_features := self._selected_filter) is None:
@@ -178,7 +178,7 @@ class DefaultObservationSpaceAdapter(
     # 4. Convert type.
     return self._observation_type_mapper.to_observations(filtered_features)
 
-  def _compute_observation_spec(self) -> gdmr_types.ObservationSpec:
+  def _compute_observation_spec(self) -> gdmr_types.ObservationSpec:  # pyrefly: ignore[invalid-type-var]
     """Computes the observation spec."""
     # 1. Filter the specs
     if (features_to_filter := self._selected_filter) is None:
@@ -206,7 +206,7 @@ class DefaultObservationSpaceAdapter(
     # 4. Convert the type.
     return self._observation_type_mapper.to_observation_spec(filtered_specs)
 
-  def observation_spec(self) -> gdmr_types.ObservationSpec:
+  def observation_spec(self) -> gdmr_types.ObservationSpec:  # pyrefly: ignore[invalid-type-var]
     """Returns the observation spec."""
     return self._observation_spec
 
@@ -220,12 +220,12 @@ class DefaultObservationSpaceAdapter(
     if (
         hasattr(value, 'dtype') and self._dtype_needs_downcast(value.dtype)
     ) or self._dtype_needs_downcast(type(value)):
-      return np.asarray(value).astype(self._max_float_dtype)
+      return np.asarray(value).astype(self._max_float_dtype)  # pyrefly: ignore[bad-return]
     else:
       return value
 
   def _dtype_needs_downcast(self, dtype: npt.DTypeLike) -> bool:
     return (
         np.issubdtype(dtype, np.floating)
-        and np.finfo(dtype).bits > self._max_bits
+        and np.finfo(dtype).bits > self._max_bits  # pyrefly: ignore[no-matching-overload]
     )

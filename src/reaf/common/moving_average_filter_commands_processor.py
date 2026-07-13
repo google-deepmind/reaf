@@ -91,7 +91,7 @@ class MovingAverageFilterCommandsProcessor(
               f"Dtype mismatch for command '{key}'. Expected"
               f" {expected_spec.dtype}, but got {value.dtype}."
           )
-      self._commands_history[key].append(value)
+      self._commands_history[key].append(value)  # pyrefly: ignore[bad-argument-type]
 
       if len(self._commands_history[key]) > self._config.average_window_size:
         self._commands_history[key].pop(0)
@@ -106,7 +106,7 @@ class MovingAverageFilterCommandsProcessor(
 
   @override
   def consumed_commands_spec(self) -> Mapping[str, gdmr_types.AnyArraySpec]:
-    return self._config.commands_spec
+    return self._config.commands_spec  # pyrefly: ignore[bad-return]
 
   @override
   def produced_commands_keys(self) -> set[str]:

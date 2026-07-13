@@ -47,7 +47,7 @@ class ExternalSignalSparseRewardProviderTest(
     reward_provider = external_signal_sparse_reward_provider.ExternalSignalSparseRewardProvider(
         "test"
     )
-    self.assert_tree_matches_spec(
+    self.assert_tree_matches_spec(  # pyrefly: ignore[bad-specialization]
         tree_structure=reward_provider.compute_reward({}),
         spec=reward_provider.reward_spec(),
     )

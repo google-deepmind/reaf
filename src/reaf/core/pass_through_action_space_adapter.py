@@ -25,10 +25,10 @@ class PassThroughActionSpaceAdapter(action_space_adapter.ActionSpaceAdapter):
   """
 
   def __init__(self, commands_spec: Mapping[str, gdmr_types.AnyArraySpec]):
-    self._commands_spec = commands_spec
+    self._commands_spec = commands_spec  # pyrefly: ignore[invalid-type-var]
 
   def commands_from_environment_action(
-      self, environment_action: gdmr_types.ActionType
+      self, environment_action: gdmr_types.ActionType  # pyrefly: ignore[invalid-type-var]
   ) -> Mapping[str, gdmr_types.ArrayType]:
     """Returns commands accepted by REAF.
 
@@ -44,9 +44,9 @@ class PassThroughActionSpaceAdapter(action_space_adapter.ActionSpaceAdapter):
           'environment_action must be a dict, but got: '
           f'{type(environment_action)}.'
       )
-    return environment_action
+    return environment_action  # pyrefly: ignore[bad-return]
 
-  def action_spec(self) -> gdmr_types.ActionSpec:
+  def action_spec(self) -> gdmr_types.ActionSpec:  # pyrefly: ignore[invalid-type-var]
     """Returns the action spec exposed by the environment."""
     return self._commands_spec
 

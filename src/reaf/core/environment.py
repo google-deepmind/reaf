@@ -58,7 +58,7 @@ class EnvironmentReset(abc.ABC, Generic[gdmr_env.ResetOptions]):
 
   def default_reset_configuration(self) -> gdmr_env.ResetOptions:
     """Returns the default reset configuration."""
-    return gdmr_env.Options()
+    return gdmr_env.Options()  # pyrefly: ignore[bad-return]
 
 
 class EndOfEpisodeHandler:
@@ -275,7 +275,7 @@ class Environment(gdmr_env.Environment):
     self._should_finalize_episode = True
     return self._last_timestep
 
-  def action_spec(self) -> gdmr_types.ActionSpec:
+  def action_spec(self) -> gdmr_types.ActionSpec:  # pyrefly: ignore[invalid-type-var]
     """Defines the actions that should be provided to `step`."""
     # The action spec corresponds to the one exposed by the adapter.
     return self._action_space_adapter.action_spec()
@@ -284,7 +284,7 @@ class Environment(gdmr_env.Environment):
     """Returns the spec associated to the returned TimeStep."""
     return self._timestep_spec
 
-  def step(self, action: gdmr_types.ActionType) -> dm_env.TimeStep:
+  def step(self, action: gdmr_types.ActionType) -> dm_env.TimeStep:  # pyrefly: ignore[invalid-type-var]
     """Updates the environment according to action and returns a `TimeStep`."""
 
     action = self._enforce_action_spec(action)
@@ -330,7 +330,7 @@ class Environment(gdmr_env.Environment):
     # `get_measurements` calls are made. In contrast, the end of episode
     # handler might interact with devices, requiring them to be informed
     # beforehand.
-    self._end_of_episode_handler.on_end_of_episode_stepping(self._last_timestep)
+    self._end_of_episode_handler.on_end_of_episode_stepping(self._last_timestep)  # pyrefly: ignore[bad-argument-type]
     self._should_finalize_episode = False
 
   @property
@@ -421,11 +421,11 @@ class Environment(gdmr_env.Environment):
 
   def _compute_observations_from_features(
       self, features: Mapping[str, gdmr_types.ArrayType]
-  ) -> tree.Structure[gdmr_types.ArrayType]:
+  ) -> tree.Structure[gdmr_types.ArrayType]:  # pyrefly: ignore[invalid-type-var]
     return self._observation_space_adapter.observations_from_features(features)
 
   def _compute_commands_from_agent_action(
-      self, agent_action: gdmr_types.ActionType
+      self, agent_action: gdmr_types.ActionType  # pyrefly: ignore[invalid-type-var]
   ) -> Mapping[str, gdmr_types.ArrayType]:
     return self._action_space_adapter.commands_from_environment_action(
         agent_action
@@ -433,7 +433,7 @@ class Environment(gdmr_env.Environment):
 
   def _restart(
       self,
-      observation: tree.Structure[gdmr_types.ArrayType],
+      observation: tree.Structure[gdmr_types.ArrayType],  # pyrefly: ignore[invalid-type-var]
   ) -> dm_env.TimeStep:
     """Returns a `TimeStep` with `step_type` set to `StepType.FIRST`."""
     return dm_env.TimeStep(
@@ -445,9 +445,9 @@ class Environment(gdmr_env.Environment):
 
   def _transition(
       self,
-      reward: tree.Structure[gdmr_types.ArrayType],
-      observation: tree.Structure[gdmr_types.ArrayType],
-      discount: tree.Structure[gdmr_types.ArrayType],
+      reward: tree.Structure[gdmr_types.ArrayType],  # pyrefly: ignore[invalid-type-var]
+      observation: tree.Structure[gdmr_types.ArrayType],  # pyrefly: ignore[invalid-type-var]
+      discount: tree.Structure[gdmr_types.ArrayType],  # pyrefly: ignore[invalid-type-var]
   ) -> dm_env.TimeStep:
     """Returns a `TimeStep` with `step_type` set to `StepType.MID`."""
     return dm_env.TimeStep(
@@ -459,8 +459,8 @@ class Environment(gdmr_env.Environment):
 
   def _termination(
       self,
-      reward: tree.Structure[gdmr_types.ArrayType],
-      observation: tree.Structure[gdmr_types.ArrayType],
+      reward: tree.Structure[gdmr_types.ArrayType],  # pyrefly: ignore[invalid-type-var]
+      observation: tree.Structure[gdmr_types.ArrayType],  # pyrefly: ignore[invalid-type-var]
   ) -> dm_env.TimeStep:
     """Returns a `TimeStep` with `step_type` set to `StepType.LAST`."""
     return dm_env.TimeStep(
@@ -472,9 +472,9 @@ class Environment(gdmr_env.Environment):
 
   def _truncation(
       self,
-      reward: tree.Structure[gdmr_types.ArrayType],
-      observation: tree.Structure[gdmr_types.ArrayType],
-      discount: tree.Structure[gdmr_types.ArrayType],
+      reward: tree.Structure[gdmr_types.ArrayType],  # pyrefly: ignore[invalid-type-var]
+      observation: tree.Structure[gdmr_types.ArrayType],  # pyrefly: ignore[invalid-type-var]
+      discount: tree.Structure[gdmr_types.ArrayType],  # pyrefly: ignore[invalid-type-var]
   ) -> dm_env.TimeStep:
     """Returns a `TimeStep` with `step_type` set to `StepType.LAST`."""
     return dm_env.TimeStep(
@@ -485,8 +485,8 @@ class Environment(gdmr_env.Environment):
     )
 
   def _enforce_action_spec(
-      self, action: gdmr_types.ActionType
-  ) -> gdmr_types.ActionType:
+      self, action: gdmr_types.ActionType  # pyrefly: ignore[invalid-type-var]
+  ) -> gdmr_types.ActionType:  # pyrefly: ignore[invalid-type-var]
     """Enforces the action spec."""
     match self._action_spec_enforcement_option:
       case ActionSpecEnforcementOption.IGNORE:

@@ -32,11 +32,11 @@ class ZeroRewardProvider(reward_provider.RewardProvider):
 
   def compute_reward(
       self, required_features: Mapping[str, gdmr_types.ArrayType]
-  ) -> tree.Structure[gdmr_types.ArrayType]:
+  ) -> tree.Structure[gdmr_types.ArrayType]:  # pyrefly: ignore[invalid-type-var]
     """Returns a zero reward."""
-    return np.zeros(1)
+    return np.zeros(1)  # pyrefly: ignore[bad-return]
 
-  def reward_spec(self) -> tree.Structure[specs.Array]:
+  def reward_spec(self) -> tree.Structure[specs.Array]:  # pyrefly: ignore[invalid-type-var]
     """Returns the spec for a constant zero reward."""
     return specs.Array(shape=(1,), dtype=float)
 

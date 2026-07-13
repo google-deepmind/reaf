@@ -118,7 +118,7 @@ class TaskLogicLayerTest(parameterized.TestCase):
         ),
     )
 
-    task_layer.validate_spec(
+    task_layer.validate_spec(  # pyrefly: ignore[bad-specialization]
         dacl_commands_spec=dacl_commands_spec,
         dacl_measurements_spec=dacl_measurements_spec,
     )
@@ -252,7 +252,7 @@ class TaskLogicLayerTest(parameterized.TestCase):
     )
 
     with self.assertRaises(ValueError):
-      task_layer.validate_spec(
+      task_layer.validate_spec(  # pyrefly: ignore[bad-specialization]
           dacl_commands_spec=dacl_commands_spec,
           dacl_measurements_spec=dacl_measurements_spec,
       )
@@ -343,7 +343,7 @@ class TaskLogicLayerTest(parameterized.TestCase):
             ),
             "dacl/command4": specs.DiscreteArray(num_values=4),
         },
-        task_layer.commands_spec(dacl_commands_spec),
+        task_layer.commands_spec(dacl_commands_spec),  # pyrefly: ignore[bad-specialization]
     )
 
   def test_reward_spec(self):
@@ -474,7 +474,7 @@ class TaskLogicLayerTest(parameterized.TestCase):
     processor2 = mock.create_autospec(
         reaf_commands_processor.CommandsProcessor, instance=True
     )
-    processor2.process_commands.side_effect = lambda command: np.sum(
+    processor2.process_commands.side_effect = lambda command: np.sum(  # pyrefly: ignore[no-matching-overload]
         {"command3": command["command1"] + np.array([-0.3, 1.0, -0.45])}
     )
     # We need to specify the spec otherwise the previous command is not
@@ -865,7 +865,7 @@ class TaskLogicLayerTest(parameterized.TestCase):
         name="processor2",
     )
 
-    processor2.process_commands.side_effect = lambda command: np.sum(
+    processor2.process_commands.side_effect = lambda command: np.sum(  # pyrefly: ignore[no-matching-overload]
         {"command3": command["command1"] + np.array([-0.3, 1.0, -0.45])}
     )
     # We need to specify the spec otherwise the previous command is not

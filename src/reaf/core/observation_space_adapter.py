@@ -30,11 +30,11 @@ class ObservationSpaceAdapter(abc.ABC):
   @abc.abstractmethod
   def observations_from_features(
       self, features: Mapping[str, gdmr_types.ArrayType]
-  ) -> tree.Structure[gdmr_types.ArrayType]:
+  ) -> tree.Structure[gdmr_types.ArrayType]:  # pyrefly: ignore[invalid-type-var]
     """Converts the REAF features into the environment observations."""
 
   @abc.abstractmethod
-  def observation_spec(self) -> gdmr_types.ObservationSpec:
+  def observation_spec(self) -> gdmr_types.ObservationSpec:  # pyrefly: ignore[invalid-type-var]
     """Returns the observation spec."""
 
   @abc.abstractmethod

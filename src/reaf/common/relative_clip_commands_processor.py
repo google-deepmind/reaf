@@ -114,10 +114,10 @@ class RelativeClipCommandsProcessor(
     if not np.allclose(clipped_command, command):
       logging.warning('clipping command (relative): %s', self._command_to_clip)
 
-    return {self._command_to_clip: clipped_command}
+    return {self._command_to_clip: clipped_command}  # pyrefly: ignore[bad-return]
 
   @override
-  def consumed_commands_spec(self) -> dict[str, specs.BoundedArray]:
+  def consumed_commands_spec(self) -> dict[str, specs.BoundedArray]:  # pyrefly: ignore[bad-override]
     return {self._command_to_clip: self._command_spec}
 
   @override
@@ -190,4 +190,4 @@ class RelativeClipCommandsProcessor(
     self._maybe_validate_reference_feature(
         features[self._reference_feature_key]
     )
-    self._reference = features[self._reference_feature_key]
+    self._reference = features[self._reference_feature_key]  # pyrefly: ignore[bad-assignment]

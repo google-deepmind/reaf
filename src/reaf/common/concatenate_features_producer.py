@@ -127,7 +127,7 @@ class ConcatenateFeaturesProducer(features_producer.FeaturesProducer):
   def produce_features(
       self, required_features: Mapping[str, gdmr_types.ArrayType]
   ) -> Mapping[str, gdmr_types.ArrayType]:
-    return {
+    return {  # pyrefly: ignore[bad-return]
         self._new_feature_name: np.concatenate(
             [
                 required_features[feature_name]

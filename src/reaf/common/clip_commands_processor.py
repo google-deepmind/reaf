@@ -94,7 +94,7 @@ class ClipCommandsProcessor(commands_processor.CommandsProcessor):
   ) -> Mapping[str, gdmr_types.ArrayType]:
     clipped_command = consumed_commands[self._command_to_clip]
 
-    return {
+    return {  # pyrefly: ignore[bad-return]
         self._command_to_clip: np.clip(
             clipped_command,
             self._min_command,
@@ -103,7 +103,7 @@ class ClipCommandsProcessor(commands_processor.CommandsProcessor):
     }
 
   @override
-  def consumed_commands_spec(self) -> Mapping[str, specs.BoundedArray]:
+  def consumed_commands_spec(self) -> Mapping[str, specs.BoundedArray]:  # pyrefly: ignore[bad-override]
     """Spec of the commands consumed by this processor."""
     return {
         self._command_to_clip: specs.BoundedArray(
