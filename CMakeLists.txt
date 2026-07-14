@@ -35,7 +35,7 @@ include(FetchContent)
 FetchContent_Declare(
     abseil-cpp
     GIT_REPOSITORY https://github.com/abseil/abseil-cpp.git
-    GIT_TAG 216a6bed75c9ec254ae0e5af537e5b9635b45191  # 20240722.2
+    GIT_TAG 20260526.0
     ${ABSEIL_FIND_ARGS}
     )
 set(ABSL_PROPAGATE_CXX_STD ON CACHE BOOL "" FORCE)
@@ -59,7 +59,7 @@ add_library(reaf_clock)
 target_sources(reaf_clock PRIVATE src/reaf/common/time_trigger_deps/clock.h
                                   src/reaf/common/time_trigger_deps/clock.cc)
 target_include_directories(reaf_clock PRIVATE src/reaf/common/time_trigger_deps)
-target_link_libraries(reaf_clock PUBLIC absl::time absl::log)
+target_link_libraries(reaf_clock PUBLIC absl::time absl::log absl::clock_interface)
 
 add_library(cycle_timer_cc)
 target_sources(cycle_timer_cc PRIVATE src/reaf/common/time_trigger_deps/cycle_timer.h

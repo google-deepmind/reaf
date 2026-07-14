@@ -16,28 +16,13 @@
 #include <chrono>
 #include <thread>
 
-#include <absl/log/log.h>
+#include <absl/base/nullability.h>
+#include <absl/synchronization/mutex.h>
 #include <absl/time/clock.h>
 #include <absl/time/time.h>
 
 namespace reaf {
 namespace {
-
-class RealTimeClock : public Clock {
- public:
-  ~RealTimeClock() override {
-    LOG(FATAL) << "RealTimeClock should never be destroyed";
-  }
-
-  absl::Time TimeNow() override { return absl::Now(); }
-
-  void SleepUntil(absl::Time wakeup_time) override {
-    absl::Duration d = wakeup_time - TimeNow();
-    if (d > absl::ZeroDuration()) {
-      absl::SleepFor(d);
-    }
-  }
-};
 
 absl::Duration DurationSinceSteadyClockEpoch() {
   using clock = std::chrono::steady_clock;
@@ -49,12 +34,6 @@ absl::Duration DurationSinceSteadyClockEpoch() {
 
 }  // namespace
 
-Clock::~Clock() {}
-Clock *Clock::RealClock() {
-  static RealTimeClock *clock = new RealTimeClock();
-  return clock;
-}
-
 MonotonicClock::MonotonicClock()
     : steady_clock_epoch_(absl::Now() - DurationSinceSteadyClockEpoch()) {}
 MonotonicClock::~MonotonicClock() {}
@@ -63,12 +42,29 @@ absl::Time MonotonicClock::TimeNow() {
   return steady_clock_epoch_ + DurationSinceSteadyClockEpoch();
 }
 
-void MonotonicClock::SleepUntil(absl::Time wakeup_time) {
-  absl::Duration wakeup_time_since_epoch = wakeup_time - steady_clock_epoch_;
+void MonotonicClock::Sleep(absl::Duration d) {
   std::chrono::steady_clock::time_point wakeup_time_in_steady_clock(
-      absl::ToChronoNanoseconds(wakeup_time_since_epoch));
+      absl::ToChronoNanoseconds(d));
 
   std::this_thread::sleep_until(wakeup_time_in_steady_clock);
+}
+
+void MonotonicClock::SleepUntil(absl::Time wakeup_time) {
+  absl::Duration wakeup_time_since_epoch = wakeup_time - steady_clock_epoch_;
+  Sleep(wakeup_time_since_epoch);
+}
+
+bool MonotonicClock::AwaitWithDeadline(absl::Mutex* absl_nonnull mu,
+                                       const absl::Condition& cond,
+                                       absl::Time deadline) {
+  // Early return if the condition is already true.
+  if (cond.Eval()) return true;
+
+  while (true) {
+    absl::Time now = TimeNow();
+    if (now >= deadline) return cond.Eval();
+    if (mu->AwaitWithTimeout(cond, deadline - now)) return true;
+  }
 }
 
 }  // namespace reaf
