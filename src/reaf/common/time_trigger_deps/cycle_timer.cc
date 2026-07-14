@@ -19,12 +19,12 @@
 #include <absl/log/check.h>
 #include <absl/log/log.h>
 #include <absl/strings/str_format.h>
-#include "clock.h"
+#include <absl/time/clock_interface.h>
 #include <absl/time/time.h>
 
 namespace reaf {
 
-CycleTimer::CycleTimer(std::unique_ptr<reaf::Clock> clock,
+CycleTimer::CycleTimer(std::unique_ptr<absl::Clock> clock,
                        absl::Duration period)
     : clock_(std::move(clock)),
       period_(period),

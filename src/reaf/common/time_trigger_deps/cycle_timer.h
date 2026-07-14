@@ -16,19 +16,19 @@
 
 #include <memory>
 
-#include "clock.h"
+#include <absl/time/clock_interface.h>
 #include <absl/time/time.h>
 
 namespace reaf {
 
 class CycleTimer {
  public:
-  CycleTimer(std::unique_ptr<reaf::Clock> clock, absl::Duration period);
+  CycleTimer(std::unique_ptr<absl::Clock> clock, absl::Duration period);
 
   void WaitForNextPeriod();
 
  private:
-  std::unique_ptr<reaf::Clock> clock_;
+  std::unique_ptr<absl::Clock> clock_;
   absl::Duration period_;
   absl::Time last_run_;
 };
