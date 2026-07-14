@@ -50,11 +50,6 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-simulation = [
-  "mujoco >= 3.10.0",
-  "mujoco-warp >= 3.9.0",
-  "torch >= 2.0.0",
-]
 dev = [
   "pytest-xdist",
 ]
