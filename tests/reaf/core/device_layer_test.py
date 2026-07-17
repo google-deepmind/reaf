@@ -13,17 +13,16 @@
 # limitations under the License.
 from unittest import mock
 
+from absl.testing import absltest
 from dm_env import specs
 import numpy as np
-from reaf.core import data_acquisition_and_control_layer
 from reaf.core import device as reaf_device
 from reaf.core import device_coordinator as reaf_coordinator
+from reaf.core import device_layer as device_layer_module
 from reaf.core import trigger
 
-from absl.testing import absltest
 
-
-class DataAcquisitionControlLayerTest(absltest.TestCase):
+class DeviceLayerTest(absltest.TestCase):
 
   def test_commands_spec_are_correct(self):
     device1 = mock.create_autospec(reaf_device.Device, instance=True)
@@ -48,13 +47,13 @@ class DataAcquisitionControlLayerTest(absltest.TestCase):
     )
     coordinator.get_devices.return_value = (device1, device2)
 
-    dacl = data_acquisition_and_control_layer.DataAcquisitionAndControlLayer(
+    device_layer = device_layer_module.DeviceLayer(
         device_coordinator=coordinator,
         commands_trigger=None,
         measurements_trigger=None,
     )
 
-    self.assertEqual(device1_spec | device2_spec, dacl.commands_spec())
+    self.assertEqual(device1_spec | device2_spec, device_layer.commands_spec())
 
   def test_measurements_spec_are_correct(self):
     device1 = mock.create_autospec(reaf_device.Device, instance=True)
@@ -79,13 +78,15 @@ class DataAcquisitionControlLayerTest(absltest.TestCase):
     )
     coordinator.get_devices.return_value = (device1, device2)
 
-    dacl = data_acquisition_and_control_layer.DataAcquisitionAndControlLayer(
+    device_layer = device_layer_module.DeviceLayer(
         device_coordinator=coordinator,
         commands_trigger=None,
         measurements_trigger=None,
     )
 
-    self.assertEqual(device1_spec | device2_spec, dacl.measurements_spec())
+    self.assertEqual(
+        device1_spec | device2_spec, device_layer.measurements_spec()
+    )
 
   def test_overlapping_commands_spec_keys_raise_error(self):
     device1 = mock.create_autospec(reaf_device.Device, instance=True)
@@ -112,7 +113,7 @@ class DataAcquisitionControlLayerTest(absltest.TestCase):
     coordinator.get_devices.return_value = (device1, device2)
 
     with self.assertRaises(RuntimeError):
-      data_acquisition_and_control_layer.DataAcquisitionAndControlLayer(
+      device_layer_module.DeviceLayer(
           device_coordinator=coordinator,
           commands_trigger=None,
           measurements_trigger=None,
@@ -143,7 +144,7 @@ class DataAcquisitionControlLayerTest(absltest.TestCase):
     coordinator.get_devices.return_value = (device1, device2)
 
     with self.assertRaises(RuntimeError):
-      data_acquisition_and_control_layer.DataAcquisitionAndControlLayer(
+      device_layer_module.DeviceLayer(
           device_coordinator=coordinator,
           commands_trigger=None,
           measurements_trigger=None,
@@ -153,7 +154,7 @@ class DataAcquisitionControlLayerTest(absltest.TestCase):
     device1 = mock.create_autospec(reaf_device.Device, instance=True)
     device2 = mock.create_autospec(reaf_device.Device, instance=True)
 
-    # We need to specify the commands_spec as the map is built during the DACL
+    # We need to specify the commands_spec as the map is built during the device_layer
     # initialisation.
 
     device1_spec = {
@@ -193,7 +194,7 @@ class DataAcquisitionControlLayerTest(absltest.TestCase):
     )
     coordinator.get_devices.return_value = (device1, device2)
 
-    dacl = data_acquisition_and_control_layer.DataAcquisitionAndControlLayer(
+    device_layer = device_layer_module.DeviceLayer(
         device_coordinator=coordinator,
         commands_trigger=None,
         measurements_trigger=None,
@@ -208,10 +209,10 @@ class DataAcquisitionControlLayerTest(absltest.TestCase):
         {'c1/command1': np.array([3.32]), 'c2/command1': np.array([-16, 4])},
     ]
 
-    all_measurements.append(dacl.begin_stepping())
+    all_measurements.append(device_layer.begin_stepping())
     for command in commands:
-      all_measurements.append(dacl.step(command))
-    dacl.end_stepping()
+      all_measurements.append(device_layer.step(command))
+    device_layer.end_stepping()
 
     coordinator.on_begin_stepping.assert_called_once()
     coordinator.on_end_stepping.assert_called_once()
@@ -273,13 +274,13 @@ class DataAcquisitionControlLayerTest(absltest.TestCase):
     )
     coordinator.get_devices.return_value = (device1, device2)
 
-    dacl = data_acquisition_and_control_layer.DataAcquisitionAndControlLayer(
+    device_layer = device_layer_module.DeviceLayer(
         device_coordinator=coordinator,
         commands_trigger=command_trigger,
         measurements_trigger=measurements_trigger,
     )
 
-    dacl.begin_stepping()
+    device_layer.begin_stepping()
     measurements_trigger.wait_for_event.assert_called_once()
     command_trigger.wait_for_event.assert_not_called()
 
@@ -288,7 +289,7 @@ class DataAcquisitionControlLayerTest(absltest.TestCase):
 
     # Arbitrary number of calls.
     for _ in range(10):
-      dacl.step({})
+      device_layer.step({})
 
     self.assertEqual(10, measurements_trigger.wait_for_event.call_count)
     self.assertEqual(10, command_trigger.wait_for_event.call_count)
@@ -299,13 +300,13 @@ class DataAcquisitionControlLayerTest(absltest.TestCase):
         reaf_coordinator.DeviceCoordinator, instance=True
     )
 
-    # Create dacl and test that it returns the coordinator.
-    dacl = data_acquisition_and_control_layer.DataAcquisitionAndControlLayer(
+    # Create device_layer and test that it returns the coordinator.
+    device_layer = device_layer_module.DeviceLayer(
         device_coordinator=coordinator,
         commands_trigger=None,
         measurements_trigger=None,
     )
-    self.assertEqual(coordinator, dacl.device_coordinator)
+    self.assertEqual(coordinator, device_layer.device_coordinator)
 
 
 if __name__ == '__main__':

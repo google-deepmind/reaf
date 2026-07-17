@@ -14,6 +14,8 @@
 from collections.abc import Mapping, Sequence
 from unittest import mock
 
+from absl.testing import absltest
+from absl.testing import parameterized
 from dm_env import specs
 import numpy as np
 from reaf.core import commands_processor as reaf_commands_processor
@@ -23,11 +25,8 @@ from reaf.core import features_producer as reaf_features_producer
 from reaf.core import logger as reaf_logger
 from reaf.core import numpy_mock_assertions
 from reaf.core import reward_provider as reaf_reward_provider
-from reaf.core import task_logic_layer
+from reaf.core import task_layer as task_layer_module
 from reaf.core import termination_checker as reaf_termination_checker
-
-from absl.testing import absltest
-from absl.testing import parameterized
 
 
 def _commands_processor(
@@ -52,7 +51,7 @@ def _features_producer(
   return producer
 
 
-class TaskLogicLayerTest(parameterized.TestCase):
+class TaskLayerTest(parameterized.TestCase):
 
   @parameterized.named_parameters(
       dict(
@@ -64,7 +63,7 @@ class TaskLogicLayerTest(parameterized.TestCase):
           testcase_name="with_processing",
           commands_processors=(
               _commands_processor(
-                  {}, set(("processor1/command1", "dacl/command3"))
+                  {}, set(("processor1/command1", "device_layer/command3"))
               ),
               _commands_processor(
                   {
@@ -72,17 +71,17 @@ class TaskLogicLayerTest(parameterized.TestCase):
                           shape=(1,), dtype=np.float32
                       )
                   },
-                  set(("dacl/command1", "dacl/command2")),
+                  set(("device_layer/command1", "device_layer/command2")),
               ),
           ),
           features_producers=(
               _features_producer(
                   {"prod1/feature1": specs.Array(shape=(3,), dtype=np.int32)},
-                  set(("dacl/measurement1",)),
+                  set(("device_layer/measurement1",)),
               ),
               _features_producer(
                   {"prod2/feature1": specs.Array(shape=(1,), dtype=np.float32)},
-                  set(("dacl/measurement1", "prod1/feature1")),
+                  set(("device_layer/measurement1", "prod1/feature1")),
               ),
           ),
       ),
@@ -92,21 +91,21 @@ class TaskLogicLayerTest(parameterized.TestCase):
       commands_processors: Sequence[reaf_commands_processor.CommandsProcessor],
       features_producers: Sequence[reaf_features_producer.FeaturesProducer],
   ):
-    dacl_commands_spec = {
-        "dacl/command1": specs.BoundedArray(
+    device_layer_commands_spec = {
+        "device_layer/command1": specs.BoundedArray(
             shape=(3,), dtype=np.float32, minimum=-1.0, maximum=1.0
         ),
-        "dacl/command2": specs.Array(shape=(3,), dtype=np.float16),
-        "dacl/command3": specs.StringArray(shape=()),
+        "device_layer/command2": specs.Array(shape=(3,), dtype=np.float16),
+        "device_layer/command3": specs.StringArray(shape=()),
     }
-    dacl_measurements_spec = {
-        "dacl/measurement1": specs.BoundedArray(
+    device_layer_measurements_spec = {
+        "device_layer/measurement1": specs.BoundedArray(
             shape=(5,), dtype=np.float32, minimum=-1.0, maximum=1.0
         ),
-        "dacl/measurement2": specs.Array(shape=(1,), dtype=np.int32),
+        "device_layer/measurement2": specs.Array(shape=(1,), dtype=np.int32),
     }
 
-    task_layer = task_logic_layer.TaskLogicLayer(
+    task_layer = task_layer_module.TaskLayer(
         commands_processors=commands_processors,
         features_producers=features_producers,
         reward_provider=mock.create_autospec(
@@ -118,16 +117,16 @@ class TaskLogicLayerTest(parameterized.TestCase):
         ),
     )
 
-    task_layer.validate_spec(  # pyrefly: ignore[bad-specialization]
-        dacl_commands_spec=dacl_commands_spec,
-        dacl_measurements_spec=dacl_measurements_spec,
+    task_layer.validate_spec(
+        device_layer_commands_spec=device_layer_commands_spec,
+        device_layer_measurements_spec=device_layer_measurements_spec,
     )
 
   @parameterized.named_parameters(
       dict(
-          testcase_name="commands_processing_do_not_match_dacl_spec",
+          testcase_name="commands_processing_do_not_match_device_layer_spec",
           commands_processors=(
-              _commands_processor({}, set(("dacl/missing_command",))),
+              _commands_processor({}, set(("device_layer/missing_command",))),
           ),
           features_producers=(),
       ),
@@ -135,7 +134,7 @@ class TaskLogicLayerTest(parameterized.TestCase):
           testcase_name="commands_processing_do_not_match_next_processor",
           commands_processors=(
               _commands_processor(
-                  {}, set(("processor1/foo_command", "dacl/command3"))
+                  {}, set(("processor1/foo_command", "device_layer/command3"))
               ),
               _commands_processor(
                   {
@@ -143,13 +142,15 @@ class TaskLogicLayerTest(parameterized.TestCase):
                           shape=(1,), dtype=np.float32
                       )
                   },
-                  set(("dacl/command1", "dacl/command2")),
+                  set(("device_layer/command1", "device_layer/command2")),
               ),
           ),
           features_producers=(),
       ),
       dict(
-          testcase_name="features_producer_uses_missing_dacl_measurment",
+          testcase_name=(
+              "features_producer_uses_missing_device_layer_measurment"
+          ),
           commands_processors=(),
           features_producers=(
               _features_producer(
@@ -158,7 +159,7 @@ class TaskLogicLayerTest(parameterized.TestCase):
                           shape=(3,), dtype=np.int32
                       )
                   },
-                  set(("dacl/measurement3",)),
+                  set(("device_layer/measurement3",)),
               ),
           ),
       ),
@@ -172,7 +173,7 @@ class TaskLogicLayerTest(parameterized.TestCase):
                           shape=(3,), dtype=np.int32
                       )
                   },
-                  set(("dacl/measurement1",)),
+                  set(("device_layer/measurement1",)),
               ),
               _features_producer(
                   {
@@ -180,7 +181,7 @@ class TaskLogicLayerTest(parameterized.TestCase):
                           shape=(1,), dtype=np.float32
                       )
                   },
-                  set(("dacl/measurement1", "producer1/bar_feature")),
+                  set(("device_layer/measurement1", "producer1/bar_feature")),
               ),
           ),
       ),
@@ -194,7 +195,7 @@ class TaskLogicLayerTest(parameterized.TestCase):
                           shape=(3,), dtype=np.int32
                       )
                   },
-                  set(("dacl/measurement1",)),
+                  set(("device_layer/measurement1",)),
               ),
               _features_producer(
                   {
@@ -202,19 +203,23 @@ class TaskLogicLayerTest(parameterized.TestCase):
                           shape=(1,), dtype=np.float16
                       ),
                   },
-                  set(("dacl/measurement1", "producer1/feature1")),
+                  set(("device_layer/measurement1", "producer1/feature1")),
               ),
           ),
       ),
       dict(
-          testcase_name="command_processor_removes_required_dacl_spec",
+          testcase_name="command_processor_removes_required_device_layer_spec",
           commands_processors=(
               _commands_processor(
-                  {}, set(("processor1/command1", "dacl/command3"))
+                  {}, set(("processor1/command1", "device_layer/command3"))
               ),
               _commands_processor(
-                  {"dacl/command1": specs.Array(shape=(1,), dtype=np.float32)},
-                  set(("dacl/command2",)),
+                  {
+                      "device_layer/command1": specs.Array(
+                          shape=(1,), dtype=np.float32
+                      )
+                  },
+                  set(("device_layer/command2",)),
               ),
           ),
           features_producers=(),
@@ -225,21 +230,21 @@ class TaskLogicLayerTest(parameterized.TestCase):
       commands_processors: Sequence[reaf_commands_processor.CommandsProcessor],
       features_producers: Sequence[reaf_features_producer.FeaturesProducer],
   ):
-    dacl_commands_spec = {
-        "dacl/command1": specs.BoundedArray(
+    device_layer_commands_spec = {
+        "device_layer/command1": specs.BoundedArray(
             shape=(3,), dtype=np.float32, minimum=-1.0, maximum=1.0
         ),
-        "dacl/command2": specs.Array(shape=(3,), dtype=np.float16),
-        "dacl/command3": specs.StringArray(shape=()),
+        "device_layer/command2": specs.Array(shape=(3,), dtype=np.float16),
+        "device_layer/command3": specs.StringArray(shape=()),
     }
-    dacl_measurements_spec = {
-        "dacl/measurement1": specs.BoundedArray(
+    device_layer_measurements_spec = {
+        "device_layer/measurement1": specs.BoundedArray(
             shape=(5,), dtype=np.float32, minimum=-1.0, maximum=1.0
         ),
-        "dacl/measurement2": specs.Array(shape=(1,), dtype=np.int32),
+        "device_layer/measurement2": specs.Array(shape=(1,), dtype=np.int32),
     }
 
-    task_layer = task_logic_layer.TaskLogicLayer(
+    task_layer = task_layer_module.TaskLayer(
         commands_processors=commands_processors,
         features_producers=features_producers,
         reward_provider=mock.create_autospec(
@@ -252,30 +257,30 @@ class TaskLogicLayerTest(parameterized.TestCase):
     )
 
     with self.assertRaises(ValueError):
-      task_layer.validate_spec(  # pyrefly: ignore[bad-specialization]
-          dacl_commands_spec=dacl_commands_spec,
-          dacl_measurements_spec=dacl_measurements_spec,
+      task_layer.validate_spec(
+          device_layer_commands_spec=device_layer_commands_spec,
+          device_layer_measurements_spec=device_layer_measurements_spec,
       )
 
   def test_features_spec(self):
     features_producers = (
         _features_producer(
             {"producer1/feature1": specs.Array(shape=(3,), dtype=np.int32)},
-            set(("dacl/measurement1",)),
+            set(("device_layer/measurement1",)),
         ),
         _features_producer(
             {"producer2/feature1": specs.Array(shape=(1,), dtype=np.float32)},
-            set(("dacl/measurement1", "producer1/feature1")),
+            set(("device_layer/measurement1", "producer1/feature1")),
         ),
     )
-    dacl_measurements_spec = {
-        "dacl/measurement1": specs.BoundedArray(
+    device_layer_measurements_spec = {
+        "device_layer/measurement1": specs.BoundedArray(
             shape=(5,), dtype=np.float32, minimum=-1.0, maximum=1.0
         ),
-        "dacl/measurement2": specs.Array(shape=(1,), dtype=np.int32),
+        "device_layer/measurement2": specs.Array(shape=(1,), dtype=np.int32),
     }
 
-    task_layer = task_logic_layer.TaskLogicLayer(
+    task_layer = task_layer_module.TaskLayer(
         commands_processors=(),
         features_producers=features_producers,
         reward_provider=mock.create_autospec(
@@ -289,14 +294,16 @@ class TaskLogicLayerTest(parameterized.TestCase):
 
     self.assertEqual(
         {
-            "dacl/measurement1": specs.BoundedArray(
+            "device_layer/measurement1": specs.BoundedArray(
                 shape=(5,), dtype=np.float32, minimum=-1.0, maximum=1.0
             ),
-            "dacl/measurement2": specs.Array(shape=(1,), dtype=np.int32),
+            "device_layer/measurement2": specs.Array(
+                shape=(1,), dtype=np.int32
+            ),
             "producer1/feature1": specs.Array(shape=(3,), dtype=np.int32),
             "producer2/feature1": specs.Array(shape=(1,), dtype=np.float32),
         },
-        task_layer.features_spec(dacl_measurements_spec),
+        task_layer.features_spec(device_layer_measurements_spec),
     )
 
   def test_commands_spec(self):
@@ -307,24 +314,24 @@ class TaskLogicLayerTest(parameterized.TestCase):
                     shape=(4,), dtype=np.float32, minimum=-12.0, maximum=14.0
                 )
             },
-            set(("processor2/command1", "dacl/command3")),
+            set(("processor2/command1", "device_layer/command3")),
         ),
         _commands_processor(
             {"processor2/command1": specs.Array(shape=(1,), dtype=np.float32)},
-            set(("dacl/command1", "dacl/command2")),
+            set(("device_layer/command1", "device_layer/command2")),
         ),
     )
 
-    dacl_commands_spec = {
-        "dacl/command1": specs.BoundedArray(
+    device_layer_commands_spec = {
+        "device_layer/command1": specs.BoundedArray(
             shape=(3,), dtype=np.float32, minimum=-1.0, maximum=1.0
         ),
-        "dacl/command2": specs.Array(shape=(3,), dtype=np.float16),
-        "dacl/command3": specs.StringArray(shape=()),
-        "dacl/command4": specs.DiscreteArray(num_values=4),
+        "device_layer/command2": specs.Array(shape=(3,), dtype=np.float16),
+        "device_layer/command3": specs.StringArray(shape=()),
+        "device_layer/command4": specs.DiscreteArray(num_values=4),
     }
 
-    task_layer = task_logic_layer.TaskLogicLayer(
+    task_layer = task_layer_module.TaskLayer(
         commands_processors=commands_processors,
         features_producers=(),
         reward_provider=mock.create_autospec(
@@ -341,9 +348,9 @@ class TaskLogicLayerTest(parameterized.TestCase):
             "processor1/command1": specs.BoundedArray(
                 shape=(4,), dtype=np.float32, minimum=-12.0, maximum=14.0
             ),
-            "dacl/command4": specs.DiscreteArray(num_values=4),
+            "device_layer/command4": specs.DiscreteArray(num_values=4),
         },
-        task_layer.commands_spec(dacl_commands_spec),  # pyrefly: ignore[bad-specialization]
+        task_layer.commands_spec(device_layer_commands_spec),  # pyrefly: ignore[bad-specialization]
     )
 
   def test_reward_spec(self):
@@ -358,7 +365,7 @@ class TaskLogicLayerTest(parameterized.TestCase):
 
     reward_provider.reward_spec.return_value = expected_reward_spec
 
-    task_layer = task_logic_layer.TaskLogicLayer(
+    task_layer = task_layer_module.TaskLayer(
         commands_processors=(),
         features_producers=(),
         reward_provider=reward_provider,
@@ -381,7 +388,7 @@ class TaskLogicLayerTest(parameterized.TestCase):
 
     discount_provider.discount_spec.return_value = expected_discount_spec
 
-    task_layer = task_logic_layer.TaskLogicLayer(
+    task_layer = task_layer_module.TaskLayer(
         commands_processors=(),
         features_producers=(),
         reward_provider=mock.create_autospec(
@@ -393,9 +400,9 @@ class TaskLogicLayerTest(parameterized.TestCase):
     self.assertEqual(expected_discount_spec, task_layer.discount_spec())
 
   def test_compute_features(self):
-    dacl_measurements = {
-        "dacl/obs1": np.array([1.0, -2.0, 12.45]),
-        "dacl/obs2": np.array([4, 5, 6], dtype=np.int32),
+    device_layer_measurements = {
+        "device_layer/obs1": np.array([1.0, -2.0, 12.45]),
+        "device_layer/obs2": np.array([4, 5, 6], dtype=np.int32),
     }
 
     producer1_features = {
@@ -404,11 +411,11 @@ class TaskLogicLayerTest(parameterized.TestCase):
     }
 
     def _producer2_features_producer(features):
-      dacl_feature = features["dacl/obs1"]
+      device_layer_feature = features["device_layer/obs1"]
       p1_feature = features["p1/obs2"]
       p1_feature = np.square(p1_feature)
-      dacl_feature = dacl_feature + np.array([-0.3, 1.0, -0.45])
-      return {"p2/obs1": p1_feature, "p2/obs2": dacl_feature}
+      device_layer_feature = device_layer_feature + np.array([-0.3, 1.0, -0.45])
+      return {"p2/obs1": p1_feature, "p2/obs2": device_layer_feature}
 
     producer1 = mock.create_autospec(
         reaf_features_producer.FeaturesProducer, instance=True
@@ -420,10 +427,10 @@ class TaskLogicLayerTest(parameterized.TestCase):
     )
     producer2.produce_features.side_effect = _producer2_features_producer
     producer2.required_features_keys.return_value = set(
-        ("dacl/obs1", "p1/obs2")
+        ("device_layer/obs1", "p1/obs2")
     )
 
-    task_layer = task_logic_layer.TaskLogicLayer(
+    task_layer = task_layer_module.TaskLayer(
         commands_processors=(),
         features_producers=(producer1, producer2),
         reward_provider=mock.create_autospec(
@@ -436,13 +443,13 @@ class TaskLogicLayerTest(parameterized.TestCase):
     )
 
     all_features = task_layer.compute_all_features(
-        measurements=dacl_measurements
+        measurements=device_layer_measurements
     )
     np.testing.assert_equal(
         all_features,
         {
-            "dacl/obs1": np.array([1.0, -2.0, 12.45]),
-            "dacl/obs2": np.array([4, 5, 6], dtype=np.int32),
+            "device_layer/obs1": np.array([1.0, -2.0, 12.45]),
+            "device_layer/obs2": np.array([4, 5, 6], dtype=np.int32),
             "p1/obs1": np.array([1.0, -2.0, 12.45]),
             "p1/obs2": np.array([4, 5, 6], dtype=np.int32),
             "p2/obs1": np.array([16, 25, 36]),
@@ -483,7 +490,7 @@ class TaskLogicLayerTest(parameterized.TestCase):
         "command1": specs.Array(shape=(3,), dtype=np.float32)
     }
 
-    task_layer = task_logic_layer.TaskLogicLayer(
+    task_layer = task_layer_module.TaskLayer(
         commands_processors=(processor1, processor2),
         features_producers=(),
         reward_provider=mock.create_autospec(
@@ -519,7 +526,7 @@ class TaskLogicLayerTest(parameterized.TestCase):
         ("feature1", "feature3")
     )
 
-    task_layer = task_logic_layer.TaskLogicLayer(
+    task_layer = task_layer_module.TaskLayer(
         commands_processors=(),
         features_producers=(),
         reward_provider=reward_provider,
@@ -573,7 +580,7 @@ class TaskLogicLayerTest(parameterized.TestCase):
     termination_checker1.check_termination.return_value = termination_state1
     termination_checker2.check_termination.return_value = termination_state2
 
-    task_layer = task_logic_layer.TaskLogicLayer(
+    task_layer = task_layer_module.TaskLayer(
         commands_processors=(),
         features_producers=(),
         reward_provider=mock.create_autospec(
@@ -633,7 +640,7 @@ class TaskLogicLayerTest(parameterized.TestCase):
         _CombinedCommandsProcessorAndFeaturesProducer, instance=True
     )
 
-    task_layer = task_logic_layer.TaskLogicLayer(
+    task_layer = task_layer_module.TaskLayer(
         commands_processors=(processor, producer_processor),
         features_producers=(producer, producer_processor),
         reward_provider=reward_provider,
@@ -680,7 +687,7 @@ class TaskLogicLayerTest(parameterized.TestCase):
     termination_checker1.check_termination.return_value = termination_state1
     termination_checker2.check_termination.return_value = termination_state2
 
-    task_layer = task_logic_layer.TaskLogicLayer(
+    task_layer = task_layer_module.TaskLayer(
         commands_processors=(),
         features_producers=(),
         reward_provider=mock.create_autospec(
@@ -712,7 +719,7 @@ class TaskLogicLayerTest(parameterized.TestCase):
         ("feature1", "feature3")
     )
 
-    task_layer = task_logic_layer.TaskLogicLayer(
+    task_layer = task_layer_module.TaskLayer(
         commands_processors=(),
         features_producers=(),
         reward_provider=mock.create_autospec(
@@ -741,9 +748,9 @@ class TaskLogicLayerTest(parameterized.TestCase):
         reaf_features_observers.FeaturesObserver, instance=True
     )
 
-    dacl_measurements = {
-        "dacl/obs1": np.array([1.0, -2.0, 12.45]),
-        "dacl/obs2": np.array([4, 5, 6], dtype=np.int32),
+    device_layer_measurements = {
+        "device_layer/obs1": np.array([1.0, -2.0, 12.45]),
+        "device_layer/obs2": np.array([4, 5, 6], dtype=np.int32),
     }
 
     producer1_features = {
@@ -766,19 +773,19 @@ class TaskLogicLayerTest(parameterized.TestCase):
     )
     producer2.produce_features.side_effect = lambda _: producer2_features
     producer2.required_features_keys.return_value = set(
-        ("dacl/obs1", "p1/obs2")
+        ("device_layer/obs1", "p1/obs2")
     )
 
     all_features = {
-        "dacl/obs1": np.array([1.0, -2.0, 12.45]),
-        "dacl/obs2": np.array([4, 5, 6], dtype=np.int32),
+        "device_layer/obs1": np.array([1.0, -2.0, 12.45]),
+        "device_layer/obs2": np.array([4, 5, 6], dtype=np.int32),
         "p1/obs1": np.array([1.0, -2.0, 12.45]),
         "p1/obs2": np.array([4, 5, 6], dtype=np.int32),
         "p2/obs1": np.array([1.7, -1.0, 12.0]),
         "p2/obs2": np.array([16, 25, -36], dtype=np.int32),
     }
 
-    task_layer = task_logic_layer.TaskLogicLayer(
+    task_layer = task_layer_module.TaskLayer(
         commands_processors=(),
         features_producers=(producer1, producer2),
         reward_provider=mock.create_autospec(
@@ -792,7 +799,7 @@ class TaskLogicLayerTest(parameterized.TestCase):
     )
 
     # Observers are called when computing all the features. Once per call.
-    task_layer.compute_all_features(measurements=dacl_measurements)
+    task_layer.compute_all_features(measurements=device_layer_measurements)
 
     numpy_mock_assertions.assert_called_once_with(
         obs1.observe_features,
@@ -809,9 +816,9 @@ class TaskLogicLayerTest(parameterized.TestCase):
 
     # Add both feature producers and command processors.
 
-    dacl_measurements = {
-        "dacl/obs1": np.array([1.0, -2.0, 12.45]),
-        "dacl/obs2": np.array([4, 5, 6], dtype=np.int32),
+    device_layer_measurements = {
+        "device_layer/obs1": np.array([1.0, -2.0, 12.45]),
+        "device_layer/obs2": np.array([4, 5, 6], dtype=np.int32),
     }
 
     producer1_features = {
@@ -834,7 +841,7 @@ class TaskLogicLayerTest(parameterized.TestCase):
     )
     producer2.produce_features.side_effect = lambda _: producer2_features
     producer2.required_features_keys.return_value = set(
-        ("dacl/obs1", "p1/obs2")
+        ("device_layer/obs1", "p1/obs2")
     )
 
     agent_action = {
@@ -875,15 +882,15 @@ class TaskLogicLayerTest(parameterized.TestCase):
     }
 
     all_features = {
-        "dacl/obs1": np.array([1.0, -2.0, 12.45]),
-        "dacl/obs2": np.array([4, 5, 6], dtype=np.int32),
+        "device_layer/obs1": np.array([1.0, -2.0, 12.45]),
+        "device_layer/obs2": np.array([4, 5, 6], dtype=np.int32),
         "p1/obs1": np.array([1.0, -2.0, 12.45]),
         "p1/obs2": np.array([4, 5, 6], dtype=np.int32),
         "p2/obs1": np.array([1.7, -1.0, 12.0]),
         "p2/obs2": np.array([16, 25, -36], dtype=np.int32),
     }
 
-    task_layer = task_logic_layer.TaskLogicLayer(
+    task_layer = task_layer_module.TaskLayer(
         commands_processors=(processor1, processor2),
         features_producers=(producer1, producer2),
         reward_provider=mock.create_autospec(
@@ -896,17 +903,17 @@ class TaskLogicLayerTest(parameterized.TestCase):
         loggers=(logger1, logger2),
     )
 
-    # Loggers are called when computing features with the dacl measurements and
-    # the full features.
-    task_layer.compute_all_features(measurements=dacl_measurements)
+    # Loggers are called when computing features with the device_layer
+    # measurements and the full features.
+    task_layer.compute_all_features(measurements=device_layer_measurements)
 
     numpy_mock_assertions.assert_called_once_with(
         logger1.record_measurements,
-        dacl_measurements,
+        device_layer_measurements,
     )
     numpy_mock_assertions.assert_called_once_with(
         logger2.record_measurements,
-        dacl_measurements,
+        device_layer_measurements,
     )
     numpy_mock_assertions.assert_called_once_with(
         logger1.record_features,
@@ -955,7 +962,7 @@ class TaskLogicLayerTest(parameterized.TestCase):
     )
 
   def test_default_reward_and_discount_providers(self):
-    task_layer = task_logic_layer.TaskLogicLayer(
+    task_layer = task_layer_module.TaskLayer(
         commands_processors=(),
         features_producers=(),
         termination_checkers=(),
@@ -1024,7 +1031,7 @@ class TaskLogicLayerTest(parameterized.TestCase):
         ),
     }
 
-    task_layer = task_logic_layer.TaskLogicLayer(
+    task_layer = task_layer_module.TaskLayer(
         commands_processors=(),
         features_producers=(),
         reward_provider=mock.create_autospec(
