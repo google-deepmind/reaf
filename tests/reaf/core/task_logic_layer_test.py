@@ -1011,6 +1011,102 @@ class TaskLogicLayerTest(parameterized.TestCase):
         0.0,
     )
 
+  # TODO: Delete this when deprecated arguments are removed.
+  def test_backward_compatibility_specs(self):
+    device_layer_commands_spec = {
+        "device_layer/command1": specs.BoundedArray(
+            shape=(3,), dtype=np.float32, minimum=-1.0, maximum=1.0
+        ),
+    }
+    device_layer_measurements_spec = {
+        "device_layer/measurement1": specs.BoundedArray(
+            shape=(5,), dtype=np.float32, minimum=-1.0, maximum=1.0
+        ),
+    }
+
+    task_layer = task_logic_layer.TaskLogicLayer(
+        commands_processors=(),
+        features_producers=(),
+        reward_provider=mock.create_autospec(
+            reaf_reward_provider.RewardProvider, instance=True
+        ),
+        termination_checkers=(),
+        discount_provider=mock.create_autospec(
+            reaf_discount_provider.DiscountProvider, instance=True
+        ),
+    )
+
+    # Test validate_spec with old names
+    task_layer.validate_spec(
+        dacl_commands_spec=device_layer_commands_spec,
+        dacl_measurements_spec=device_layer_measurements_spec,
+    )
+
+    # Test validate_spec with new names
+    task_layer.validate_spec(
+        device_layer_commands_spec=device_layer_commands_spec,
+        device_layer_measurements_spec=device_layer_measurements_spec,
+    )
+
+    # Test validate_spec with both (should fail)
+    with self.assertRaisesRegex(ValueError, "Cannot provide both"):
+      task_layer.validate_spec(
+          dacl_commands_spec=device_layer_commands_spec,
+          device_layer_commands_spec=device_layer_commands_spec,
+          device_layer_measurements_spec=device_layer_measurements_spec,
+      )
+
+    with self.assertRaisesRegex(ValueError, "Cannot provide both"):
+      task_layer.validate_spec(
+          device_layer_commands_spec=device_layer_commands_spec,
+          dacl_measurements_spec=device_layer_measurements_spec,
+          device_layer_measurements_spec=device_layer_measurements_spec,
+      )
+
+    # Test features_spec with old name
+    self.assertEqual(
+        device_layer_measurements_spec,
+        task_layer.features_spec(
+            dacl_measurements_spec=device_layer_measurements_spec
+        ),
+    )
+
+    # Test features_spec with new name
+    self.assertEqual(
+        device_layer_measurements_spec,
+        task_layer.features_spec(
+            device_layer_measurements_spec=device_layer_measurements_spec
+        ),
+    )
+
+    # Test features_spec with both (should fail)
+    with self.assertRaisesRegex(ValueError, "Cannot provide both"):
+      task_layer.features_spec(
+          dacl_measurements_spec=device_layer_measurements_spec,
+          device_layer_measurements_spec=device_layer_measurements_spec,
+      )
+
+    # Test commands_spec with old name
+    self.assertEqual(
+        device_layer_commands_spec,
+        task_layer.commands_spec(dacl_commands_spec=device_layer_commands_spec),
+    )
+
+    # Test commands_spec with new name
+    self.assertEqual(
+        device_layer_commands_spec,
+        task_layer.commands_spec(
+            device_layer_commands_spec=device_layer_commands_spec
+        ),
+    )
+
+    # Test commands_spec with both (should fail)
+    with self.assertRaisesRegex(ValueError, "Cannot provide both"):
+      task_layer.commands_spec(
+          dacl_commands_spec=device_layer_commands_spec,
+          device_layer_commands_spec=device_layer_commands_spec,
+      )
+
 
 if __name__ == "__main__":
   absltest.main()

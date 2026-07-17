@@ -385,8 +385,8 @@ class Environment(gdmr_env.Environment):
     """Validates the specs on the task layer."""
     # Validate the spec on the task layer.
     self._task_layer.validate_spec(
-        dacl_commands_spec=(self._device_layer.commands_spec()),
-        dacl_measurements_spec=(self._device_layer.measurements_spec()),
+        device_layer_commands_spec=(self._device_layer.commands_spec()),
+        device_layer_measurements_spec=(self._device_layer.measurements_spec()),
     )
 
   def _validate_adapters_specs(self) -> None:
