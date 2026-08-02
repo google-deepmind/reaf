@@ -104,13 +104,13 @@ class DeltaToAbsoluteCommandsProcessor(
       self, reference_feature: gdmr_types.ArrayType
   ):
     if not self._validated_reference_feature:
-      if reference_feature.shape != self._config.consumed_command_spec.shape:
+      if reference_feature.shape != self._config.consumed_command_spec.shape:  # pyrefly: ignore[missing-attribute]
         raise ValueError(
             f'Shape of reference feature {self._config.reference_feature_key} '
             f'({reference_feature.shape}) does not match the shape of the '
             f'consumed command ({self._config.consumed_command_spec.shape}).'
         )
-      if reference_feature.dtype != self._config.consumed_command_spec.dtype:
+      if reference_feature.dtype != self._config.consumed_command_spec.dtype:  # pyrefly: ignore[missing-attribute]
         raise ValueError(
             f'Dtype of reference feature {self._config.reference_feature_key} '
             f'({reference_feature.dtype}) does not match the dtype of the '

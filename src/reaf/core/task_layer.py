@@ -226,10 +226,10 @@ class TaskLayer:
       spec.update(processor.consumed_commands_spec())
     return spec
 
-  def reward_spec(self) -> tree.Structure[specs.Array]:
+  def reward_spec(self) -> tree.Structure[specs.Array]:  # pyrefly: ignore[invalid-type-var]
     return self._reward_provider.reward_spec()
 
-  def discount_spec(self) -> tree.Structure[specs.Array]:
+  def discount_spec(self) -> tree.Structure[specs.Array]:  # pyrefly: ignore[invalid-type-var]
     return self._discount_provider.discount_spec()
 
   def perform_reset(self) -> None:
@@ -293,7 +293,7 @@ class TaskLayer:
 
   def compute_reward(
       self, features: Mapping[str, gdmr_types.ArrayType]
-  ) -> tree.Structure[gdmr_types.ArrayType]:
+  ) -> tree.Structure[gdmr_types.ArrayType]:  # pyrefly: ignore[invalid-type-var]
     """Computes the reward given the features."""
     return self._reward_provider.compute_reward({
         key: features[key]
@@ -319,7 +319,7 @@ class TaskLayer:
       self,
       features: Mapping[str, gdmr_types.ArrayType],
       termination_state: reaf_termination_checker.TerminationResult,
-  ) -> tree.Structure[gdmr_types.ArrayType]:
+  ) -> tree.Structure[gdmr_types.ArrayType]:  # pyrefly: ignore[invalid-type-var]
     """Computes the discount given the features and termination state."""
     return self._discount_provider.compute_discount(
         {

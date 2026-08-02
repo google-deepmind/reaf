@@ -118,7 +118,7 @@ class TaskLayerTest(parameterized.TestCase):
     )
 
     task_layer.validate_spec(
-        device_layer_commands_spec=device_layer_commands_spec,
+        device_layer_commands_spec=device_layer_commands_spec,  # pyrefly: ignore[bad-argument-type]
         device_layer_measurements_spec=device_layer_measurements_spec,
     )
 
@@ -258,7 +258,7 @@ class TaskLayerTest(parameterized.TestCase):
 
     with self.assertRaises(ValueError):
       task_layer.validate_spec(
-          device_layer_commands_spec=device_layer_commands_spec,
+          device_layer_commands_spec=device_layer_commands_spec,  # pyrefly: ignore[bad-argument-type]
           device_layer_measurements_spec=device_layer_measurements_spec,
       )
 
@@ -350,7 +350,7 @@ class TaskLayerTest(parameterized.TestCase):
             ),
             "device_layer/command4": specs.DiscreteArray(num_values=4),
         },
-        task_layer.commands_spec(device_layer_commands_spec),  # pyrefly: ignore[bad-specialization]
+        task_layer.commands_spec(device_layer_commands_spec),  # pyrefly: ignore[bad-argument-type, bad-specialization]
     )
 
   def test_reward_spec(self):

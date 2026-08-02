@@ -139,7 +139,7 @@ class PositionToVelocityCommandsProcessor(
   ):
     if not self._validated_reference_feature:
       if (
-          reference_feature.shape
+          reference_feature.shape  # pyrefly: ignore[missing-attribute]
           != self._config.consumed_position_command_spec.shape
       ):
         raise ValueError(
@@ -149,7 +149,7 @@ class PositionToVelocityCommandsProcessor(
             f' ({self._config.consumed_position_command_spec.shape}).'
         )
       if (
-          reference_feature.dtype
+          reference_feature.dtype  # pyrefly: ignore[missing-attribute]
           != self._config.consumed_position_command_spec.dtype
       ):
         raise ValueError(

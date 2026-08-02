@@ -96,7 +96,7 @@ class FlattenFeaturesProducer(features_producer.FeaturesProducer):
   ) -> Mapping[str, gdmr_types.ArrayType]:
     new_features = {}
     for config in self._flattened_features_configs:
-      new_features[config.flattened_feature_name] = required_features[
+      new_features[config.flattened_feature_name] = required_features[  # pyrefly: ignore[missing-attribute]
           config.feature_name
       ].flatten(order=config.order)
     return new_features

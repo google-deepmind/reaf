@@ -105,7 +105,7 @@ class StackFeaturesProducer(features_producer.FeaturesProducer):
             # We need to have a tiling of (stack_size, 1, 1, ..., 1).
             (
                 self._stack_size,
-                *([1] * len(required_features[config.feature_name].shape)),
+                *([1] * len(required_features[config.feature_name].shape)),  # pyrefly: ignore[missing-attribute]
             ),
         )
       self._first_step_setup_needed = False

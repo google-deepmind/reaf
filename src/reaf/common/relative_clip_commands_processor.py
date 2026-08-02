@@ -128,16 +128,17 @@ class RelativeClipCommandsProcessor(
       self, consumed_command: gdmr_types.ArrayType
   ):
     if not self._validated_command:
-      if consumed_command.shape != self._command_spec.shape:
+      if consumed_command.shape != self._command_spec.shape:  # pyrefly: ignore[missing-attribute]
         raise ValueError(
             f'Shape of the command {self._command_to_clip} '
             f'({consumed_command.shape}) does not match the shape of the '
             f'consumed command ({self._command_spec.shape}).'
         )
       if not self._dtypes_loosely_matches(
-          consumed_command.dtype, self._command_spec.dtype
+          consumed_command.dtype, self._command_spec.dtype  # pyrefly: ignore[missing-attribute]
       ):
         raise ValueError(
+            # pyrefly: ignore[missing-attribute]
             f'Dtype of the consumed command {self._command_to_clip} '
             f'({consumed_command.dtype}) does not match the dtype of the '
             f'command ({self._command_spec.dtype}).'
@@ -148,16 +149,17 @@ class RelativeClipCommandsProcessor(
       self, reference_feature: gdmr_types.ArrayType
   ):
     if not self._validated_reference_feature:
-      if reference_feature.shape != self._command_spec.shape:
+      if reference_feature.shape != self._command_spec.shape:  # pyrefly: ignore[missing-attribute]
         raise ValueError(
             f'Shape of reference feature {self._reference_feature_key} '
             f'({reference_feature.shape}) does not match the shape of the '
             f'consumed command ({self._command_spec.shape}).'
         )
       if not self._dtypes_loosely_matches(
-          reference_feature.dtype, self._command_spec.dtype
+          reference_feature.dtype, self._command_spec.dtype  # pyrefly: ignore[missing-attribute]
       ):
         raise ValueError(
+            # pyrefly: ignore[missing-attribute]
             f'Dtype of reference feature {self._reference_feature_key} '
             f'({reference_feature.dtype}) does not match the dtype of the '
             f'consumed command ({self._command_spec.dtype}).'

@@ -81,12 +81,12 @@ class MovingAverageFilterCommandsProcessor(
       if not self._validated_specs:
         # Validate the shape and dtype of incoming commands (only once)
         expected_spec = self._config.commands_spec[key]
-        if value.shape != expected_spec.shape:
+        if value.shape != expected_spec.shape:  # pyrefly: ignore[missing-attribute]
           raise ValueError(
               f"Shape mismatch for command '{key}'. Expected"
               f" {expected_spec.shape}, but got {value.shape}."
           )
-        if value.dtype != expected_spec.dtype:
+        if value.dtype != expected_spec.dtype:  # pyrefly: ignore[missing-attribute]
           raise ValueError(
               f"Dtype mismatch for command '{key}'. Expected"
               f" {expected_spec.dtype}, but got {value.dtype}."
