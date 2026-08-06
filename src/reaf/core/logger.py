@@ -30,7 +30,7 @@ class Logger(abc.ABC):
        `CommandsProcessor.process_commands` invocation, tracking the
        transformation of commands.
     4. `record_final_commands` is called once with the final commands sent to
-       the DACL.
+       the DeviceLayer.
 
     Notes:
     An environment is first reset().  This triggers the first two steps above.
@@ -51,7 +51,7 @@ class Logger(abc.ABC):
   def record_measurements(
       self, measurements: Mapping[str, gdmr_types.ArrayType]
   ) -> None:
-    """Called once with all the measurements from the DACL."""
+    """Called once with all the measurements from the DeviceLayer."""
 
   def record_features(
       self, features: Mapping[str, gdmr_types.ArrayType]
@@ -61,7 +61,7 @@ class Logger(abc.ABC):
   def record_final_commands(
       self, commands: Mapping[str, gdmr_types.ArrayType]
   ) -> None:
-    """Called once with the final commands sent to the DACL."""
+    """Called once with the final commands sent to the DeviceLayer."""
 
   def record_commands_processing(
       self,

@@ -17,6 +17,8 @@ from collections.abc import Callable, Mapping
 import dataclasses
 from unittest import mock
 
+from absl.testing import absltest
+from absl.testing import parameterized
 import dm_env
 from dm_env import specs
 from gdm_robotics.interfaces import environment as gdmr_env
@@ -24,19 +26,16 @@ from gdm_robotics.interfaces import types as gdmr_types
 from gdm_robotics.testing import specs_utils as test_specs
 import numpy as np
 from reaf.core import action_space_adapter as reaf_action_space_adapter
-from reaf.core import data_acquisition_and_control_layer as reaf_dacl
+from reaf.core import device_layer as device_layer_module
 from reaf.core import environment as reaf_environment
 from reaf.core import logger as reaf_logger
 from reaf.core import numpy_mock_assertions
 from reaf.core import observation_space_adapter as reaf_observation_space_adapter
-from reaf.core import task_logic_layer as reaf_tll
+from reaf.core import task_layer as task_layer_module
 from reaf.core import termination_checker as reaf_termination_checker
 from reaf.testing import fakes
 import tree
 from typing_extensions import override
-
-from absl.testing import absltest
-from absl.testing import parameterized
 
 
 class EnvironmentTest(parameterized.TestCase):
@@ -58,20 +57,22 @@ class EnvironmentTest(parameterized.TestCase):
     )
     action_adapter.action_spec.return_value = expected_action_spec
 
-    ttl = mock.create_autospec(reaf_tll.TaskLogicLayer, instance=True)
+    task_layer = mock.create_autospec(
+        task_layer_module.TaskLayer, instance=True
+    )
     # Define reward and discount spec as the environment internally creates zero
     # reward and discount based on the spec.
     # Choice here is arbitrary.
-    ttl.reward_spec.return_value = specs.BoundedArray(
+    task_layer.reward_spec.return_value = specs.BoundedArray(
         shape=(2,), dtype=np.float32, minimum=0.0, maximum=100.0
     )
 
-    ttl.discount_spec.return_value = specs.BoundedArray(
+    task_layer.discount_spec.return_value = specs.BoundedArray(
         shape=(1,), dtype=np.float32, minimum=0, maximum=1.0
     )
 
     # Action adapter and task commands spec must match.
-    ttl.commands_spec.return_value = expected_action_spec
+    task_layer.commands_spec.return_value = expected_action_spec
     action_adapter.task_commands_keys.return_value = set((
         "action1",
         "action2",
@@ -79,10 +80,10 @@ class EnvironmentTest(parameterized.TestCase):
     ))
 
     environment = reaf_environment.Environment(
-        data_acquisition_and_control_layer=mock.create_autospec(
-            reaf_dacl.DataAcquisitionAndControlLayer, instance=True
+        device_layer=mock.create_autospec(
+            device_layer_module.DeviceLayer, instance=True
         ),
-        task_logic_layer=ttl,
+        task_layer=task_layer,
         action_space_adapter=action_adapter,
         observation_space_adapter=mock.create_autospec(
             reaf_observation_space_adapter.ObservationSpaceAdapter,
@@ -111,7 +112,9 @@ class EnvironmentTest(parameterized.TestCase):
         expected_observation_spec
     )
 
-    ttl = mock.create_autospec(reaf_tll.TaskLogicLayer, instance=True)
+    task_layer = mock.create_autospec(
+        task_layer_module.TaskLayer, instance=True
+    )
     expected_reward_spec = {
         "main_reward": specs.BoundedArray(
             shape=(2,), dtype=np.float32, minimum=0.0, maximum=100.0
@@ -124,23 +127,23 @@ class EnvironmentTest(parameterized.TestCase):
         ),
     }
 
-    ttl.reward_spec.return_value = expected_reward_spec
-    ttl.discount_spec.return_value = expected_discount_spec
+    task_layer.reward_spec.return_value = expected_reward_spec
+    task_layer.discount_spec.return_value = expected_discount_spec
 
     # Action adapter and task commands spec must match. As we do not use
     # directly the values in this test, we just make the return value
     # compatible.
-    ttl.commands_spec.return_value = {}
+    task_layer.commands_spec.return_value = {}
     action_adapter = mock.create_autospec(
         reaf_action_space_adapter.ActionSpaceAdapter, instance=True
     )
     action_adapter.task_commands_keys.return_value = set()
 
     environment = reaf_environment.Environment(
-        data_acquisition_and_control_layer=mock.create_autospec(
-            reaf_dacl.DataAcquisitionAndControlLayer, instance=True
+        device_layer=mock.create_autospec(
+            device_layer_module.DeviceLayer, instance=True
         ),
-        task_logic_layer=ttl,
+        task_layer=task_layer,
         action_space_adapter=action_adapter,
         observation_space_adapter=observation_adapter,
         environment_reset=mock.create_autospec(
@@ -178,26 +181,28 @@ class EnvironmentTest(parameterized.TestCase):
         "action4",
     ))
 
-    ttl = mock.create_autospec(reaf_tll.TaskLogicLayer, instance=True)
-    ttl.commands_spec.return_value = task_commands_spec
+    task_layer = mock.create_autospec(
+        task_layer_module.TaskLayer, instance=True
+    )
+    task_layer.commands_spec.return_value = task_commands_spec
 
     # Define reward and discount spec as the environment internally creates zero
     # reward and discount based on the spec.
     # Choice here is arbitrary.
-    ttl.reward_spec.return_value = specs.BoundedArray(
+    task_layer.reward_spec.return_value = specs.BoundedArray(
         shape=(2,), dtype=np.float32, minimum=0.0, maximum=100.0
     )
 
-    ttl.discount_spec.return_value = specs.BoundedArray(
+    task_layer.discount_spec.return_value = specs.BoundedArray(
         shape=(1,), dtype=np.float32, minimum=0, maximum=1.0
     )
 
     with self.assertRaises(ValueError):
       reaf_environment.Environment(
-          data_acquisition_and_control_layer=mock.create_autospec(
-              reaf_dacl.DataAcquisitionAndControlLayer, instance=True
+          device_layer=mock.create_autospec(
+              device_layer_module.DeviceLayer, instance=True
           ),
-          task_logic_layer=ttl,
+          task_layer=task_layer,
           action_space_adapter=action_adapter,
           observation_space_adapter=mock.create_autospec(
               reaf_observation_space_adapter.ObservationSpaceAdapter,
@@ -225,23 +230,25 @@ class EnvironmentTest(parameterized.TestCase):
         "observation3",
     ))
 
-    ttl = mock.create_autospec(reaf_tll.TaskLogicLayer, instance=True)
-    ttl.features_spec.return_value = task_features_spec
+    task_layer = mock.create_autospec(
+        task_layer_module.TaskLayer, instance=True
+    )
+    task_layer.features_spec.return_value = task_features_spec
     # Define reward and discount spec as the environment internally creates zero
     # reward and discount based on the spec.
     # Choice here is arbitrary.
-    ttl.reward_spec.return_value = specs.BoundedArray(
+    task_layer.reward_spec.return_value = specs.BoundedArray(
         shape=(2,), dtype=np.float32, minimum=0.0, maximum=100.0
     )
 
-    ttl.discount_spec.return_value = specs.BoundedArray(
+    task_layer.discount_spec.return_value = specs.BoundedArray(
         shape=(1,), dtype=np.float32, minimum=0, maximum=1.0
     )
 
     # Action adapter and task commands spec must match. As we do not use
     # directly the values in this test, we just make the return value
     # compatible.
-    ttl.commands_spec.return_value = {}
+    task_layer.commands_spec.return_value = {}
     action_adapter = mock.create_autospec(
         reaf_action_space_adapter.ActionSpaceAdapter, instance=True
     )
@@ -249,10 +256,10 @@ class EnvironmentTest(parameterized.TestCase):
 
     with self.assertRaises(ValueError):
       reaf_environment.Environment(
-          data_acquisition_and_control_layer=mock.create_autospec(
-              reaf_dacl.DataAcquisitionAndControlLayer, instance=True
+          device_layer=mock.create_autospec(
+              device_layer_module.DeviceLayer, instance=True
           ),
-          task_logic_layer=ttl,
+          task_layer=task_layer,
           action_space_adapter=action_adapter,
           observation_space_adapter=observation_adapter,
           environment_reset=mock.create_autospec(
@@ -292,21 +299,23 @@ class EnvironmentTest(parameterized.TestCase):
         "feature1": np.array([0.13, 0.52, -0.3]).astype(np.float32)
     }
 
-    dacl_mock = mock.create_autospec(
-        reaf_dacl.DataAcquisitionAndControlLayer, instance=True
+    device_layer_mock = mock.create_autospec(
+        device_layer_module.DeviceLayer, instance=True
     )
-    dacl_mock.begin_stepping.return_value = initial_obs
+    device_layer_mock.begin_stepping.return_value = initial_obs
 
-    ttl_mock = mock.create_autospec(reaf_tll.TaskLogicLayer, instance=True)
-    ttl_mock.compute_all_features.return_value = all_features
+    task_layer_mock = mock.create_autospec(
+        task_layer_module.TaskLayer, instance=True
+    )
+    task_layer_mock.compute_all_features.return_value = all_features
     # Define reward and discount spec as the environment internally creates zero
     # reward and discount based on the spec.
     # Choice here is arbitrary.
-    ttl_mock.reward_spec.return_value = specs.BoundedArray(
+    task_layer_mock.reward_spec.return_value = specs.BoundedArray(
         shape=(2,), dtype=np.float32, minimum=0.0, maximum=100.0
     )
 
-    ttl_mock.discount_spec.return_value = specs.BoundedArray(
+    task_layer_mock.discount_spec.return_value = specs.BoundedArray(
         shape=(1,), dtype=np.float32, minimum=0, maximum=1.0
     )
 
@@ -320,15 +329,15 @@ class EnvironmentTest(parameterized.TestCase):
     # Action adapter and task commands spec must match. As we do not use
     # directly the values in this test, we just make the return value
     # compatible.
-    ttl_mock.commands_spec.return_value = {}
+    task_layer_mock.commands_spec.return_value = {}
     action_adapter = mock.create_autospec(
         reaf_action_space_adapter.ActionSpaceAdapter, instance=True
     )
     action_adapter.task_commands_keys.return_value = set()
 
     environment = reaf_environment.Environment(
-        data_acquisition_and_control_layer=dacl_mock,
-        task_logic_layer=ttl_mock,
+        device_layer=device_layer_mock,
+        task_layer=task_layer_mock,
         action_space_adapter=action_adapter,
         observation_space_adapter=observation_adapter_mock,
         environment_reset=environment_reset,
@@ -359,7 +368,7 @@ class EnvironmentTest(parameterized.TestCase):
     # mocks we do not enforce that the output has gone through the correct
     # pipeline.
     numpy_mock_assertions.assert_called_once_with(
-        ttl_mock.compute_all_features, initial_obs
+        task_layer_mock.compute_all_features, initial_obs
     )
     numpy_mock_assertions.assert_called_once_with(
         observation_adapter_mock.observations_from_features, all_features
@@ -386,20 +395,22 @@ class EnvironmentTest(parameterized.TestCase):
     original_reset.do_reset = mock.MagicMock()
     environment_reset.do_reset = mock.MagicMock()
 
-    dacl_mock = mock.create_autospec(
-        reaf_dacl.DataAcquisitionAndControlLayer, instance=True
+    device_layer_mock = mock.create_autospec(
+        device_layer_module.DeviceLayer, instance=True
     )
 
-    ttl_mock = mock.create_autospec(reaf_tll.TaskLogicLayer, instance=True)
-    ttl_mock.compute_all_features.return_value = {}
+    task_layer_mock = mock.create_autospec(
+        task_layer_module.TaskLayer, instance=True
+    )
+    task_layer_mock.compute_all_features.return_value = {}
     # Define reward and discount spec as the environment internally creates zero
     # reward and discount based on the spec.
     # Choice here is arbitrary.
-    ttl_mock.reward_spec.return_value = specs.Array(
+    task_layer_mock.reward_spec.return_value = specs.Array(
         shape=(1,), dtype=np.float32
     )
 
-    ttl_mock.discount_spec.return_value = specs.Array(
+    task_layer_mock.discount_spec.return_value = specs.Array(
         shape=(1,), dtype=np.float32
     )
 
@@ -410,15 +421,15 @@ class EnvironmentTest(parameterized.TestCase):
     # Action adapter and task commands spec must match. As we do not use
     # directly the values in this test, we just make the return value
     # compatible.
-    ttl_mock.commands_spec.return_value = {}
+    task_layer_mock.commands_spec.return_value = {}
     action_adapter = mock.create_autospec(
         reaf_action_space_adapter.ActionSpaceAdapter, instance=True
     )
     action_adapter.task_commands_keys.return_value = set()
 
     environment = reaf_environment.Environment(
-        data_acquisition_and_control_layer=dacl_mock,
-        task_logic_layer=ttl_mock,
+        device_layer=device_layer_mock,
+        task_layer=task_layer_mock,
         action_space_adapter=action_adapter,
         observation_space_adapter=observation_adapter_mock,
         environment_reset=original_reset,
@@ -438,7 +449,7 @@ class EnvironmentTest(parameterized.TestCase):
     )
     original_reset.do_reset.assert_not_called()
 
-  def test_reset_resets_task_logic_layer(self):
+  def test_reset_resets_task_layer(self):
     @dataclasses.dataclass(frozen=True, kw_only=True)
     class ResetOptions(gdmr_env.Options):
       pass
@@ -451,33 +462,35 @@ class EnvironmentTest(parameterized.TestCase):
     # "TypeError: missing a required argument: 'config'" error.
     environment_reset.do_reset = mock.MagicMock()
 
-    ttl_mock = mock.create_autospec(reaf_tll.TaskLogicLayer, instance=True)
-    ttl_mock.compute_all_features.return_value = {}
+    task_layer_mock = mock.create_autospec(
+        task_layer_module.TaskLayer, instance=True
+    )
+    task_layer_mock.compute_all_features.return_value = {}
     # Define reward and discount spec as the environment internally creates zero
     # reward and discount based on the spec.
     # Choice here is arbitrary.
-    ttl_mock.reward_spec.return_value = specs.Array(
+    task_layer_mock.reward_spec.return_value = specs.Array(
         shape=(1,), dtype=np.float32
     )
 
-    ttl_mock.discount_spec.return_value = specs.Array(
+    task_layer_mock.discount_spec.return_value = specs.Array(
         shape=(1,), dtype=np.float32
     )
 
     # Action adapter and task commands spec must match. As we do not use
     # directly the values in this test, we just make the return value
     # compatible.
-    ttl_mock.commands_spec.return_value = {}
+    task_layer_mock.commands_spec.return_value = {}
     action_adapter = mock.create_autospec(
         reaf_action_space_adapter.ActionSpaceAdapter, instance=True
     )
     action_adapter.task_commands_keys.return_value = set()
 
     environment = reaf_environment.Environment(
-        data_acquisition_and_control_layer=mock.create_autospec(
-            reaf_dacl.DataAcquisitionAndControlLayer, instance=True
+        device_layer=mock.create_autospec(
+            device_layer_module.DeviceLayer, instance=True
         ),
-        task_logic_layer=ttl_mock,
+        task_layer=task_layer_mock,
         action_space_adapter=action_adapter,
         observation_space_adapter=mock.create_autospec(
             reaf_observation_space_adapter.ObservationSpaceAdapter,
@@ -488,7 +501,7 @@ class EnvironmentTest(parameterized.TestCase):
     )
 
     environment.reset_with_options(options=ResetOptions())
-    ttl_mock.perform_reset.assert_called_once()
+    task_layer_mock.perform_reset.assert_called_once()
 
   def test_end_of_episode_handler_is_called_on_last_timestep(self):
 
@@ -496,27 +509,29 @@ class EnvironmentTest(parameterized.TestCase):
         reaf_environment.EndOfEpisodeHandler, instance=True
     )
 
-    dacl_mock = mock.create_autospec(
-        reaf_dacl.DataAcquisitionAndControlLayer, instance=True
+    device_layer_mock = mock.create_autospec(
+        device_layer_module.DeviceLayer, instance=True
     )
-    dacl_mock.begin_stepping.return_value = {}
+    device_layer_mock.begin_stepping.return_value = {}
 
-    ttl_mock = mock.create_autospec(reaf_tll.TaskLogicLayer, instance=True)
-    ttl_mock.compute_all_features.return_value = {}
+    task_layer_mock = mock.create_autospec(
+        task_layer_module.TaskLayer, instance=True
+    )
+    task_layer_mock.compute_all_features.return_value = {}
     # Define reward and discount spec as the environment internally creates zero
     # reward and discount based on the spec.
     # Choice here is arbitrary.
-    ttl_mock.reward_spec.return_value = specs.BoundedArray(
+    task_layer_mock.reward_spec.return_value = specs.BoundedArray(
         shape=(2,), dtype=np.float32, minimum=0.0, maximum=100.0
     )
 
-    ttl_mock.discount_spec.return_value = specs.BoundedArray(
+    task_layer_mock.discount_spec.return_value = specs.BoundedArray(
         shape=(1,), dtype=np.float32, minimum=0, maximum=1.0
     )
 
     # We need to trigger a termination so that the timestep will be marked as
     # `LAST`
-    ttl_mock.check_for_termination.return_value = (
+    task_layer_mock.check_for_termination.return_value = (
         reaf_termination_checker.TerminationResult.TERMINATE
     )
 
@@ -528,15 +543,15 @@ class EnvironmentTest(parameterized.TestCase):
     # Action adapter and task commands spec must match. As we do not use
     # directly the values in this test, we just make the return value
     # compatible.
-    ttl_mock.commands_spec.return_value = {}
+    task_layer_mock.commands_spec.return_value = {}
     action_adapter = mock.create_autospec(
         reaf_action_space_adapter.ActionSpaceAdapter, instance=True
     )
     action_adapter.task_commands_keys.return_value = set()
 
     environment = reaf_environment.Environment(
-        data_acquisition_and_control_layer=dacl_mock,
-        task_logic_layer=ttl_mock,
+        device_layer=device_layer_mock,
+        task_layer=task_layer_mock,
         action_space_adapter=action_adapter,
         observation_space_adapter=observation_adapter_mock,
         environment_reset=mock.create_autospec(
@@ -564,32 +579,34 @@ class EnvironmentTest(parameterized.TestCase):
     environment_reset.default_reset_configuration = mock.MagicMock(
         return_value=ResetOptions(option1="my_option1", option2=42)
     )
-    ttl_mock = mock.create_autospec(reaf_tll.TaskLogicLayer, instance=True)
+    task_layer_mock = mock.create_autospec(
+        task_layer_module.TaskLayer, instance=True
+    )
     # Define reward and discount spec as the environment internally creates zero
     # reward and discount based on the spec.
     # Choice here is arbitrary.
-    ttl_mock.reward_spec.return_value = specs.BoundedArray(
+    task_layer_mock.reward_spec.return_value = specs.BoundedArray(
         shape=(2,), dtype=np.float32, minimum=0.0, maximum=100.0
     )
 
-    ttl_mock.discount_spec.return_value = specs.BoundedArray(
+    task_layer_mock.discount_spec.return_value = specs.BoundedArray(
         shape=(1,), dtype=np.float32, minimum=0, maximum=1.0
     )
 
     # Action adapter and task commands spec must match. As we do not use
     # directly the values in this test, we just make the return value
     # compatible.
-    ttl_mock.commands_spec.return_value = {}
+    task_layer_mock.commands_spec.return_value = {}
     action_adapter = mock.create_autospec(
         reaf_action_space_adapter.ActionSpaceAdapter, instance=True
     )
     action_adapter.task_commands_keys.return_value = set()
 
     environment = reaf_environment.Environment(
-        data_acquisition_and_control_layer=mock.create_autospec(
-            reaf_dacl.DataAcquisitionAndControlLayer, instance=True
+        device_layer=mock.create_autospec(
+            device_layer_module.DeviceLayer, instance=True
         ),
-        task_logic_layer=ttl_mock,
+        task_layer=task_layer_mock,
         action_space_adapter=action_adapter,
         observation_space_adapter=mock.create_autospec(
             reaf_observation_space_adapter.ObservationSpaceAdapter,
@@ -616,32 +633,34 @@ class EnvironmentTest(parameterized.TestCase):
       def do_reset(self, options: ResetOptions) -> None:
         del options
 
-    ttl_mock = mock.create_autospec(reaf_tll.TaskLogicLayer, instance=True)
+    task_layer_mock = mock.create_autospec(
+        task_layer_module.TaskLayer, instance=True
+    )
     # Define reward and discount spec as the environment internally creates zero
     # reward and discount based on the spec.
     # Choice here is arbitrary.
-    ttl_mock.reward_spec.return_value = specs.BoundedArray(
+    task_layer_mock.reward_spec.return_value = specs.BoundedArray(
         shape=(2,), dtype=np.float32, minimum=0.0, maximum=100.0
     )
 
-    ttl_mock.discount_spec.return_value = specs.BoundedArray(
+    task_layer_mock.discount_spec.return_value = specs.BoundedArray(
         shape=(1,), dtype=np.float32, minimum=0, maximum=1.0
     )
 
     # Action adapter and task commands spec must match. As we do not use
     # directly the values in this test, we just make the return value
     # compatible.
-    ttl_mock.commands_spec.return_value = {}
+    task_layer_mock.commands_spec.return_value = {}
     action_adapter = mock.create_autospec(
         reaf_action_space_adapter.ActionSpaceAdapter, instance=True
     )
     action_adapter.task_commands_keys.return_value = set()
 
     environment = reaf_environment.Environment(
-        data_acquisition_and_control_layer=mock.create_autospec(
-            reaf_dacl.DataAcquisitionAndControlLayer, instance=True
+        device_layer=mock.create_autospec(
+            device_layer_module.DeviceLayer, instance=True
         ),
-        task_logic_layer=ttl_mock,
+        task_layer=task_layer_mock,
         action_space_adapter=action_adapter,
         observation_space_adapter=mock.create_autospec(
             reaf_observation_space_adapter.ObservationSpaceAdapter,
@@ -686,29 +705,31 @@ class EnvironmentTest(parameterized.TestCase):
         "feature1": np.array([0.13, 0.52, -0.3]).astype(np.float32)
     }
 
-    dacl_mock = mock.create_autospec(
-        reaf_dacl.DataAcquisitionAndControlLayer, instance=True
+    device_layer_mock = mock.create_autospec(
+        device_layer_module.DeviceLayer, instance=True
     )
-    dacl_mock.begin_stepping.return_value = initial_obs
+    device_layer_mock.begin_stepping.return_value = initial_obs
 
-    ttl_mock = mock.create_autospec(reaf_tll.TaskLogicLayer, instance=True)
-    ttl_mock.compute_all_features.return_value = all_features
+    task_layer_mock = mock.create_autospec(
+        task_layer_module.TaskLayer, instance=True
+    )
+    task_layer_mock.compute_all_features.return_value = all_features
 
     # Define reward and discount spec as the environment internally creates zero
     # reward and discount based on the spec.
     # Choice here is arbitrary.
-    ttl_mock.reward_spec.return_value = specs.BoundedArray(
+    task_layer_mock.reward_spec.return_value = specs.BoundedArray(
         shape=(2,), dtype=np.float32, minimum=0.0, maximum=100.0
     )
 
-    ttl_mock.discount_spec.return_value = specs.BoundedArray(
+    task_layer_mock.discount_spec.return_value = specs.BoundedArray(
         shape=(1,), dtype=np.float32, minimum=0, maximum=1.0
     )
 
     # Action adapter and task commands spec must match. As we do not use
     # directly the values in this test, we just make the return value
     # compatible.
-    ttl_mock.commands_spec.return_value = {}
+    task_layer_mock.commands_spec.return_value = {}
     action_adapter = mock.create_autospec(
         reaf_action_space_adapter.ActionSpaceAdapter, instance=True
     )
@@ -722,8 +743,8 @@ class EnvironmentTest(parameterized.TestCase):
     )
 
     environment = reaf_environment.Environment(
-        data_acquisition_and_control_layer=dacl_mock,
-        task_logic_layer=ttl_mock,
+        device_layer=device_layer_mock,
+        task_layer=task_layer_mock,
         action_space_adapter=action_adapter,
         observation_space_adapter=observation_adapter_mock,
         environment_reset=environment_reset,
@@ -784,22 +805,24 @@ class EnvironmentTest(parameterized.TestCase):
         "feature1": np.array([0.13, 0.52, -0.3]).astype(np.float32)
     }
 
-    dacl_mock = mock.create_autospec(
-        reaf_dacl.DataAcquisitionAndControlLayer, instance=True
+    device_layer_mock = mock.create_autospec(
+        device_layer_module.DeviceLayer, instance=True
     )
-    dacl_mock.begin_stepping.return_value = initial_obs
+    device_layer_mock.begin_stepping.return_value = initial_obs
 
-    ttl_mock = mock.create_autospec(reaf_tll.TaskLogicLayer, instance=True)
-    ttl_mock.compute_all_features.return_value = all_features
+    task_layer_mock = mock.create_autospec(
+        task_layer_module.TaskLayer, instance=True
+    )
+    task_layer_mock.compute_all_features.return_value = all_features
 
     # Define reward and discount spec as the environment internally creates zero
     # reward and discount based on the spec.
     # Choice here is arbitrary.
-    ttl_mock.reward_spec.return_value = specs.BoundedArray(
+    task_layer_mock.reward_spec.return_value = specs.BoundedArray(
         shape=(2,), dtype=np.float32, minimum=0.0, maximum=100.0
     )
 
-    ttl_mock.discount_spec.return_value = specs.BoundedArray(
+    task_layer_mock.discount_spec.return_value = specs.BoundedArray(
         shape=(1,), dtype=np.float32, minimum=0, maximum=1.0
     )
 
@@ -810,7 +833,7 @@ class EnvironmentTest(parameterized.TestCase):
     # Action adapter and task commands spec must match. As we do not use
     # directly the values in this test, we just make the return value
     # compatible.
-    ttl_mock.commands_spec.return_value = {}
+    task_layer_mock.commands_spec.return_value = {}
     action_adapter_mock.task_commands_keys.return_value = set()
 
     observation_adapter_mock = mock.create_autospec(
@@ -821,8 +844,8 @@ class EnvironmentTest(parameterized.TestCase):
     )
 
     environment = reaf_environment.Environment(
-        data_acquisition_and_control_layer=dacl_mock,
-        task_logic_layer=ttl_mock,
+        device_layer=device_layer_mock,
+        task_layer=task_layer_mock,
         action_space_adapter=action_adapter_mock,
         observation_space_adapter=observation_adapter_mock,
         environment_reset=environment_reset,
@@ -931,18 +954,20 @@ class EnvironmentTest(parameterized.TestCase):
         "feature1": np.array([0.13, 0.52, -0.3]).astype(np.float32)
     }
 
-    dacl_mock = mock.create_autospec(
-        reaf_dacl.DataAcquisitionAndControlLayer, instance=True
+    device_layer_mock = mock.create_autospec(
+        device_layer_module.DeviceLayer, instance=True
     )
-    dacl_mock.step.return_value = initial_obs
+    device_layer_mock.step.return_value = initial_obs
 
-    ttl_mock = mock.create_autospec(reaf_tll.TaskLogicLayer, instance=True)
+    task_layer_mock = mock.create_autospec(
+        task_layer_module.TaskLayer, instance=True
+    )
 
     # Action adapter and task commands spec must match.
     action_adapter_mock.task_commands_keys.return_value = set(
         ("action1", "action2")
     )
-    ttl_mock.commands_spec.return_value = {
+    task_layer_mock.commands_spec.return_value = {
         "action1": specs.Array(shape=(3,), dtype=np.float32),
         "action2": specs.Array(shape=(5,), dtype=np.int32),
     }
@@ -950,24 +975,24 @@ class EnvironmentTest(parameterized.TestCase):
     # Define reward and discount spec as the environment internally creates zero
     # reward and discount based on the spec.
     # Choice here is arbitrary.
-    ttl_mock.reward_spec.return_value = {
+    task_layer_mock.reward_spec.return_value = {
         "reward1": specs.BoundedArray(
             shape=(1,), dtype=np.float32, minimum=0.0, maximum=100.0
         ),
     }
-    ttl_mock.discount_spec.return_value = {
+    task_layer_mock.discount_spec.return_value = {
         "discount": specs.BoundedArray(
             shape=(1,), dtype=np.float32, minimum=0, maximum=1.0
         ),
     }
-    ttl_mock.compute_all_features.return_value = all_features
-    ttl_mock.compute_reward.return_value = {
+    task_layer_mock.compute_all_features.return_value = all_features
+    task_layer_mock.compute_reward.return_value = {
         "reward1": np.asarray(5.6).astype(np.float32)
     }
-    ttl_mock.compute_discount.return_value = {
+    task_layer_mock.compute_discount.return_value = {
         "discount": np.asarray(0.9).astype(np.float32)
     }
-    ttl_mock.check_for_termination.return_value = termination_result
+    task_layer_mock.check_for_termination.return_value = termination_result
 
     observation_adapter_mock = mock.create_autospec(
         reaf_observation_space_adapter.ObservationSpaceAdapter, instance=True
@@ -977,8 +1002,8 @@ class EnvironmentTest(parameterized.TestCase):
     )
 
     environment = reaf_environment.Environment(
-        data_acquisition_and_control_layer=dacl_mock,
-        task_logic_layer=ttl_mock,
+        device_layer=device_layer_mock,
+        task_layer=task_layer_mock,
         action_space_adapter=action_adapter_mock,
         observation_space_adapter=observation_adapter_mock,
         environment_reset=mock.create_autospec(
@@ -991,7 +1016,7 @@ class EnvironmentTest(parameterized.TestCase):
     environment.reset()
 
     # Reset mocks state after reset.
-    ttl_mock.compute_all_features.reset_mock()
+    task_layer_mock.compute_all_features.reset_mock()
     observation_adapter_mock.observations_from_features.reset_mock()
 
     timestep = environment.step(agent_action)
@@ -1011,24 +1036,24 @@ class EnvironmentTest(parameterized.TestCase):
     action_adapter_mock.commands_from_environment_action.assert_called_once_with(
         agent_action
     )
-    ttl_mock.compute_final_commands.assert_called_once_with(
+    task_layer_mock.compute_final_commands.assert_called_once_with(
         action_adapter_output
     )
 
-    dacl_mock.step.assert_called_once()
+    device_layer_mock.step.assert_called_once()
 
     # Output pipeline.
     numpy_mock_assertions.assert_called_once_with(
-        ttl_mock.compute_all_features, initial_obs
+        task_layer_mock.compute_all_features, initial_obs
     )
     numpy_mock_assertions.assert_called_once_with(
-        ttl_mock.compute_reward, all_features
+        task_layer_mock.compute_reward, all_features
     )
     numpy_mock_assertions.assert_called_once_with(
-        ttl_mock.check_for_termination, all_features
+        task_layer_mock.check_for_termination, all_features
     )
     numpy_mock_assertions.assert_called_once_with(
-        ttl_mock.compute_discount,
+        task_layer_mock.compute_discount,
         all_features,
         termination_result,
     )
@@ -1036,7 +1061,7 @@ class EnvironmentTest(parameterized.TestCase):
         observation_adapter_mock.observations_from_features, all_features
     )
 
-  def test_reset_triggers_dacl_begin_stepping(self):
+  def test_reset_triggers_device_layer_begin_stepping(self):
     # Define the custom options class. This must be a dataclass and inherit from
     # gdmr_env.Options.
 
@@ -1053,15 +1078,17 @@ class EnvironmentTest(parameterized.TestCase):
     # "TypeError: missing a required argument: 'config'" error.
     environment_reset.do_reset = mock.MagicMock()
 
-    ttl = mock.create_autospec(reaf_tll.TaskLogicLayer, instance=True)
+    task_layer = mock.create_autospec(
+        task_layer_module.TaskLayer, instance=True
+    )
     # Define reward and discount spec as the environment internally creates zero
     # reward and discount based on the spec.
     # Choice here is arbitrary.
-    ttl.reward_spec.return_value = specs.BoundedArray(
+    task_layer.reward_spec.return_value = specs.BoundedArray(
         shape=(2,), dtype=np.float32, minimum=0.0, maximum=100.0
     )
 
-    ttl.discount_spec.return_value = specs.BoundedArray(
+    task_layer.discount_spec.return_value = specs.BoundedArray(
         shape=(1,), dtype=np.float32, minimum=0, maximum=1.0
     )
 
@@ -1072,15 +1099,15 @@ class EnvironmentTest(parameterized.TestCase):
         reaf_action_space_adapter.ActionSpaceAdapter, instance=True
     )
     action_adapter.task_commands_keys.return_value = set()
-    ttl.commands_spec.return_value = {}
+    task_layer.commands_spec.return_value = {}
 
-    dacl_mock = mock.create_autospec(
-        reaf_dacl.DataAcquisitionAndControlLayer, instance=True
+    device_layer_mock = mock.create_autospec(
+        device_layer_module.DeviceLayer, instance=True
     )
 
     environment = reaf_environment.Environment(
-        data_acquisition_and_control_layer=dacl_mock,
-        task_logic_layer=ttl,
+        device_layer=device_layer_mock,
+        task_layer=task_layer,
         action_space_adapter=action_adapter,
         observation_space_adapter=mock.create_autospec(
             reaf_observation_space_adapter.ObservationSpaceAdapter,
@@ -1093,7 +1120,7 @@ class EnvironmentTest(parameterized.TestCase):
     environment.reset_with_options(
         options=ResetOptions(option1="my_option1", option2=42)
     )
-    dacl_mock.begin_stepping.assert_called_once()
+    device_layer_mock.begin_stepping.assert_called_once()
 
   @parameterized.named_parameters(
       dict(
@@ -1112,26 +1139,28 @@ class EnvironmentTest(parameterized.TestCase):
           should_assert=True,
       ),
   )
-  def test_termination_triggers_dacl_end_stepping(
+  def test_termination_triggers_device_layer_end_stepping(
       self,
       termination_result: reaf_termination_checker.TerminationResult,
       should_assert: bool,
   ):
-    dacl_mock = mock.create_autospec(
-        reaf_dacl.DataAcquisitionAndControlLayer, instance=True
+    device_layer_mock = mock.create_autospec(
+        device_layer_module.DeviceLayer, instance=True
     )
 
-    ttl_mock = mock.create_autospec(reaf_tll.TaskLogicLayer, instance=True)
-    ttl_mock.check_for_termination.return_value = termination_result
+    task_layer_mock = mock.create_autospec(
+        task_layer_module.TaskLayer, instance=True
+    )
+    task_layer_mock.check_for_termination.return_value = termination_result
 
     # Define reward and discount spec as the environment internally creates zero
     # reward and discount based on the spec.
     # Choice here is arbitrary.
-    ttl_mock.reward_spec.return_value = specs.BoundedArray(
+    task_layer_mock.reward_spec.return_value = specs.BoundedArray(
         shape=(2,), dtype=np.float32, minimum=0.0, maximum=100.0
     )
 
-    ttl_mock.discount_spec.return_value = specs.BoundedArray(
+    task_layer_mock.discount_spec.return_value = specs.BoundedArray(
         shape=(1,), dtype=np.float32, minimum=0, maximum=1.0
     )
 
@@ -1142,11 +1171,11 @@ class EnvironmentTest(parameterized.TestCase):
         reaf_action_space_adapter.ActionSpaceAdapter, instance=True
     )
     action_adapter.task_commands_keys.return_value = set()
-    ttl_mock.commands_spec.return_value = {}
+    task_layer_mock.commands_spec.return_value = {}
 
     environment = reaf_environment.Environment(
-        data_acquisition_and_control_layer=dacl_mock,
-        task_logic_layer=ttl_mock,
+        device_layer=device_layer_mock,
+        task_layer=task_layer_mock,
         action_space_adapter=action_adapter,
         observation_space_adapter=mock.create_autospec(
             reaf_observation_space_adapter.ObservationSpaceAdapter,
@@ -1174,30 +1203,32 @@ class EnvironmentTest(parameterized.TestCase):
       environment.step({})
 
     if should_assert:
-      dacl_mock.end_stepping.assert_called_once()
+      device_layer_mock.end_stepping.assert_called_once()
     else:
-      dacl_mock.end_stepping.assert_not_called()
+      device_layer_mock.end_stepping.assert_not_called()
 
-  def test_early_reset_triggers_dacl_end_stepping_and_end_of_episode_handler(
+  def test_early_reset_triggers_device_layer_end_stepping_and_end_of_episode_handler(
       self,
   ):
-    dacl_mock = mock.create_autospec(
-        reaf_dacl.DataAcquisitionAndControlLayer, instance=True
+    device_layer_mock = mock.create_autospec(
+        device_layer_module.DeviceLayer, instance=True
     )
 
-    ttl_mock = mock.create_autospec(reaf_tll.TaskLogicLayer, instance=True)
-    ttl_mock.check_for_termination.return_value = (
+    task_layer_mock = mock.create_autospec(
+        task_layer_module.TaskLayer, instance=True
+    )
+    task_layer_mock.check_for_termination.return_value = (
         reaf_termination_checker.TerminationResult.DO_NOT_TERMINATE
     )
 
     # Define reward and discount spec as the environment internally creates zero
     # reward and discount based on the spec.
     # Choice here is arbitrary.
-    ttl_mock.reward_spec.return_value = specs.BoundedArray(
+    task_layer_mock.reward_spec.return_value = specs.BoundedArray(
         shape=(2,), dtype=np.float32, minimum=0.0, maximum=100.0
     )
 
-    ttl_mock.discount_spec.return_value = specs.BoundedArray(
+    task_layer_mock.discount_spec.return_value = specs.BoundedArray(
         shape=(1,), dtype=np.float32, minimum=0, maximum=1.0
     )
 
@@ -1208,15 +1239,15 @@ class EnvironmentTest(parameterized.TestCase):
         reaf_action_space_adapter.ActionSpaceAdapter, instance=True
     )
     action_adapter_mock.task_commands_keys.return_value = set()
-    ttl_mock.commands_spec.return_value = {}
+    task_layer_mock.commands_spec.return_value = {}
 
     end_of_episode_handler_mock = mock.create_autospec(
         reaf_environment.EndOfEpisodeHandler, instance=True
     )
 
     environment = reaf_environment.Environment(
-        data_acquisition_and_control_layer=dacl_mock,
-        task_logic_layer=ttl_mock,
+        device_layer=device_layer_mock,
+        task_layer=task_layer_mock,
         action_space_adapter=action_adapter_mock,
         observation_space_adapter=mock.create_autospec(
             reaf_observation_space_adapter.ObservationSpaceAdapter,
@@ -1232,7 +1263,7 @@ class EnvironmentTest(parameterized.TestCase):
     environment.step({})
     environment.reset()
 
-    dacl_mock.end_stepping.assert_called_once()
+    device_layer_mock.end_stepping.assert_called_once()
     end_of_episode_handler_mock.on_end_of_episode_stepping.assert_called_once()
 
   @parameterized.named_parameters(
@@ -1280,9 +1311,11 @@ class EnvironmentTest(parameterized.TestCase):
       expected_zero_reward: tree.Structure[gdmr_types.ArrayType],  # pyrefly: ignore[invalid-type-var]
       expected_zero_discount: tree.Structure[gdmr_types.ArrayType],  # pyrefly: ignore[invalid-type-var]
   ):
-    ttl_mock = mock.create_autospec(reaf_tll.TaskLogicLayer, instance=True)
-    ttl_mock.reward_spec.return_value = reward_spec
-    ttl_mock.discount_spec.return_value = discount_spec
+    task_layer_mock = mock.create_autospec(
+        task_layer_module.TaskLayer, instance=True
+    )
+    task_layer_mock.reward_spec.return_value = reward_spec
+    task_layer_mock.discount_spec.return_value = discount_spec
 
     # Action adapter and task commands spec must match. As we do not use
     # directly the values in this test, we just make the return value
@@ -1291,13 +1324,13 @@ class EnvironmentTest(parameterized.TestCase):
         reaf_action_space_adapter.ActionSpaceAdapter, instance=True
     )
     action_adapter.task_commands_keys.return_value = set()
-    ttl_mock.commands_spec.return_value = {}
+    task_layer_mock.commands_spec.return_value = {}
 
     environment = reaf_environment.Environment(
-        data_acquisition_and_control_layer=mock.create_autospec(
-            reaf_dacl.DataAcquisitionAndControlLayer, instance=True
+        device_layer=mock.create_autospec(
+            device_layer_module.DeviceLayer, instance=True
         ),
-        task_logic_layer=ttl_mock,
+        task_layer=task_layer_mock,
         action_space_adapter=action_adapter,
         observation_space_adapter=mock.create_autospec(
             reaf_observation_space_adapter.ObservationSpaceAdapter,
@@ -1314,17 +1347,19 @@ class EnvironmentTest(parameterized.TestCase):
     np.testing.assert_equal(timestep.reward, expected_zero_reward)
     np.testing.assert_equal(timestep.discount, expected_zero_discount)
 
-  def test_returns_dacl_and_task_logic(self):
+  def test_returns_device_layer_and_task_layer(self):
     # Create fake objects to make an environment.
     # Choice is arbitrary.
-    dacl_mock = mock.create_autospec(
-        reaf_dacl.DataAcquisitionAndControlLayer, instance=True
+    device_layer_mock = mock.create_autospec(
+        device_layer_module.DeviceLayer, instance=True
     )
-    ttl_mock = mock.create_autospec(reaf_tll.TaskLogicLayer, instance=True)
-    ttl_mock.reward_spec.return_value = specs.BoundedArray(
+    task_layer_mock = mock.create_autospec(
+        task_layer_module.TaskLayer, instance=True
+    )
+    task_layer_mock.reward_spec.return_value = specs.BoundedArray(
         shape=(2,), dtype=np.float32, minimum=0.0, maximum=100.0
     )
-    ttl_mock.discount_spec.return_value = specs.BoundedArray(
+    task_layer_mock.discount_spec.return_value = specs.BoundedArray(
         shape=(1,), dtype=np.float32, minimum=0, maximum=1.0
     )
     action_adapter = mock.create_autospec(
@@ -1335,8 +1370,8 @@ class EnvironmentTest(parameterized.TestCase):
     # Make environment, and ensure it returns the same objects passed during
     # construction.
     environment = reaf_environment.Environment(
-        data_acquisition_and_control_layer=dacl_mock,
-        task_logic_layer=ttl_mock,
+        device_layer=device_layer_mock,
+        task_layer=task_layer_mock,
         action_space_adapter=action_adapter,
         observation_space_adapter=mock.create_autospec(
             reaf_observation_space_adapter.ObservationSpaceAdapter,
@@ -1347,8 +1382,8 @@ class EnvironmentTest(parameterized.TestCase):
         ),
         end_of_episode_handler=None,
     )
-    self.assertEqual(dacl_mock, environment.data_acquisition_and_control_layer)
-    self.assertEqual(ttl_mock, environment.task_logic_layer)
+    self.assertEqual(device_layer_mock, environment.device_layer)
+    self.assertEqual(task_layer_mock, environment.task_layer)
 
   @parameterized.named_parameters(
       dict(
@@ -1430,20 +1465,22 @@ class EnvironmentTest(parameterized.TestCase):
     )
     action_adapter.action_spec.return_value = valid_action_spec
 
-    ttl = mock.create_autospec(reaf_tll.TaskLogicLayer, instance=True)
+    task_layer = mock.create_autospec(
+        task_layer_module.TaskLayer, instance=True
+    )
     # Define reward and discount spec as the environment internally creates zero
     # reward and discount based on the spec.
     # Choice here is arbitrary.
-    ttl.reward_spec.return_value = specs.BoundedArray(
+    task_layer.reward_spec.return_value = specs.BoundedArray(
         shape=(1,), dtype=np.float32, minimum=0.0, maximum=100.0
     )
 
-    ttl.discount_spec.return_value = specs.BoundedArray(
+    task_layer.discount_spec.return_value = specs.BoundedArray(
         shape=(1,), dtype=np.float32, minimum=0, maximum=1.0
     )
 
     # Action adapter and task commands spec must match.
-    ttl.commands_spec.return_value = {"action1": valid_action_spec}
+    task_layer.commands_spec.return_value = {"action1": valid_action_spec}
     action_adapter.task_commands_keys.return_value = set(("action1",))
     recorded_actions = []
     action_adapter.commands_from_environment_action.side_effect = (
@@ -1451,10 +1488,10 @@ class EnvironmentTest(parameterized.TestCase):
     )
 
     environment = reaf_environment.Environment(
-        data_acquisition_and_control_layer=mock.create_autospec(
-            reaf_dacl.DataAcquisitionAndControlLayer, instance=True
+        device_layer=mock.create_autospec(
+            device_layer_module.DeviceLayer, instance=True
         ),
-        task_logic_layer=ttl,
+        task_layer=task_layer,
         action_space_adapter=action_adapter,
         observation_space_adapter=mock.create_autospec(
             reaf_observation_space_adapter.ObservationSpaceAdapter,
@@ -1525,32 +1562,34 @@ class EnvironmentTest(parameterized.TestCase):
 
   def test_default_adapters(self):
     """Tests that the default adapters are used."""
-    dacl_output = {
+    device_layer_output = {
         "observation1": np.array([0.23, -0.42, 0.3]).astype(np.float32),
         "observation2": np.array([1, 2, -4, 5, -19]).astype(np.int32),
     }
 
-    # DACL values are needed as the environment will use them internally. For
-    # this test specifically we only care about the TTL.
-    dacl_mock = mock.create_autospec(
-        reaf_dacl.DataAcquisitionAndControlLayer, instance=True
+    # device_layer values are needed as the environment will use them internally. For
+    # this test specifically we only care about the task_layer.
+    device_layer_mock = mock.create_autospec(
+        device_layer_module.DeviceLayer, instance=True
     )
-    dacl_mock.step.return_value = dacl_output
-    dacl_mock.measurements_spec.return_value = {
+    device_layer_mock.step.return_value = device_layer_output
+    device_layer_mock.measurements_spec.return_value = {
         "observation1": specs.Array(shape=(3,), dtype=np.float32),
         "observation2": specs.Array(shape=(5,), dtype=np.int32),
     }
-    dacl_mock.commands_spec.return_value = {
+    device_layer_mock.commands_spec.return_value = {
         "action1": specs.Array(shape=(3,), dtype=np.float32),
         "action2": specs.Array(shape=(5,), dtype=np.int32),
     }
 
-    ttl_mock = mock.create_autospec(reaf_tll.TaskLogicLayer, instance=True)
-    ttl_mock.commands_spec.return_value = {
+    task_layer_mock = mock.create_autospec(
+        task_layer_module.TaskLayer, instance=True
+    )
+    task_layer_mock.commands_spec.return_value = {
         "action1": specs.Array(shape=(3,), dtype=np.float32),
         "action2": specs.Array(shape=(5,), dtype=np.int32),
     }
-    ttl_mock.features_spec.return_value = {
+    task_layer_mock.features_spec.return_value = {
         "observation1": specs.Array(shape=(3,), dtype=np.float32),
         "observation2": specs.Array(shape=(5,), dtype=np.int32),
         "feature1": specs.Array(shape=(3,), dtype=np.float32),
@@ -1559,29 +1598,29 @@ class EnvironmentTest(parameterized.TestCase):
     # Define reward and discount spec as the environment internally creates zero
     # reward and discount based on the spec.
     # Choice here is arbitrary.
-    ttl_mock.reward_spec.return_value = specs.BoundedArray(
+    task_layer_mock.reward_spec.return_value = specs.BoundedArray(
         shape=(1,), dtype=np.float32, minimum=0.0, maximum=100.0
     )
 
-    ttl_mock.discount_spec.return_value = specs.BoundedArray(
+    task_layer_mock.discount_spec.return_value = specs.BoundedArray(
         shape=(1,), dtype=np.float32, minimum=0, maximum=1.0
     )
-    ttl_mock.compute_all_features.return_value = {
+    task_layer_mock.compute_all_features.return_value = {
         "observation1": np.array([0.23, -0.42, 0.3]).astype(np.float32),
         "observation2": np.array([1, 2, -4, 5, -19]).astype(np.int32),
         "feature1": np.array([0.1, 0.2, 0.3]).astype(np.float32),
     }
 
     environment = reaf_environment.Environment(
-        data_acquisition_and_control_layer=dacl_mock,
-        task_logic_layer=ttl_mock,
+        device_layer=device_layer_mock,
+        task_layer=task_layer_mock,
         environment_reset=mock.create_autospec(
             reaf_environment.EnvironmentReset, instance=True
         ),
         action_spec_enforcement_option=reaf_environment.ActionSpecEnforcementOption.IGNORE,
     )
 
-    # This should match the TTL commands spec.
+    # This should match the task_layer commands spec.
     self.assertEqual(
         environment.action_spec(),
         {
@@ -1589,7 +1628,8 @@ class EnvironmentTest(parameterized.TestCase):
             "action2": specs.Array(shape=(5,), dtype=np.int32),
         },
     )
-    # This should match the TTL reward, discount spec and the features spec
+    # This should match the task_layer reward, discount spec and the features
+    # spec
     expected_timestep_spec = gdmr_types.TimeStepSpec(
         step_type=gdmr_types.STEP_TYPE_SPEC,
         reward=specs.BoundedArray(
@@ -1624,7 +1664,7 @@ class EnvironmentTest(parameterized.TestCase):
     }
     environment.step(agent_action)
     numpy_mock_assertions.assert_called_once_with(
-        ttl_mock.compute_final_commands, agent_action
+        task_layer_mock.compute_final_commands, agent_action
     )
 
 
@@ -1674,24 +1714,24 @@ class EnvironmentLoggerIntegrationTest(absltest.TestCase):
     device = fakes.FakeDevice.one_command_one_measurement(
         "device", "command", (2,), observation_name, (3,)
     )
-    dacl = fakes.create_dacl(device)
+    device_layer = fakes.create_device_layer(device)
     command_processor = fakes.CommandRenamer(
-        {"command": "agent_command"}, dacl.commands_spec()
+        {"command": "agent_command"}, device_layer.commands_spec()
     )
 
-    tll = fakes.create_task_layer(
+    task_layer = fakes.create_task_layer(
         commands_processors=[command_processor],
     )
     action_spec = test_specs.random_array_spec(shape=(4,))
     action_adapter = fakes.prefixing_action_adapter(
         "agent_command", action_spec
     )
-    features_spec = dacl.measurements_spec()
+    features_spec = device_layer.measurements_spec()
     observation_adapter = fakes.no_op_observation_adapter(features_spec)
 
     return reaf_environment.Environment(
-        data_acquisition_and_control_layer=dacl,
-        task_logic_layer=tll,
+        device_layer=device_layer,
+        task_layer=task_layer,
         action_space_adapter=action_adapter,
         observation_space_adapter=observation_adapter,
         environment_reset=fakes.no_op_reset(),
@@ -1739,15 +1779,17 @@ class EnvironmentLoggerIntegrationTest(absltest.TestCase):
         reaf_environment.EnvironmentCloser, instance=True
     )
 
-    ttl_mock = mock.create_autospec(reaf_tll.TaskLogicLayer, instance=True)
+    task_layer_mock = mock.create_autospec(
+        task_layer_module.TaskLayer, instance=True
+    )
     # Define reward and discount spec to satisfy __init__ validation.
-    ttl_mock.reward_spec.return_value = specs.Array(
+    task_layer_mock.reward_spec.return_value = specs.Array(
         shape=(1,), dtype=np.float32
     )
-    ttl_mock.discount_spec.return_value = specs.Array(
+    task_layer_mock.discount_spec.return_value = specs.Array(
         shape=(1,), dtype=np.float32
     )
-    ttl_mock.commands_spec.return_value = {}
+    task_layer_mock.commands_spec.return_value = {}
 
     action_adapter = mock.create_autospec(
         reaf_action_space_adapter.ActionSpaceAdapter, instance=True
@@ -1755,10 +1797,10 @@ class EnvironmentLoggerIntegrationTest(absltest.TestCase):
     action_adapter.task_commands_keys.return_value = set()
 
     environment = reaf_environment.Environment(
-        data_acquisition_and_control_layer=mock.create_autospec(
-            reaf_dacl.DataAcquisitionAndControlLayer, instance=True
+        device_layer=mock.create_autospec(
+            device_layer_module.DeviceLayer, instance=True
         ),
-        task_logic_layer=ttl_mock,
+        task_layer=task_layer_mock,
         action_space_adapter=action_adapter,
         observation_space_adapter=mock.create_autospec(
             reaf_observation_space_adapter.ObservationSpaceAdapter,
@@ -1779,15 +1821,17 @@ class EnvironmentLoggerIntegrationTest(absltest.TestCase):
         reaf_environment.EnvironmentCloser, instance=True
     )
 
-    ttl_mock = mock.create_autospec(reaf_tll.TaskLogicLayer, instance=True)
+    task_layer_mock = mock.create_autospec(
+        task_layer_module.TaskLayer, instance=True
+    )
     # Define reward and discount spec to satisfy __init__ validation.
-    ttl_mock.reward_spec.return_value = specs.Array(
+    task_layer_mock.reward_spec.return_value = specs.Array(
         shape=(1,), dtype=np.float32
     )
-    ttl_mock.discount_spec.return_value = specs.Array(
+    task_layer_mock.discount_spec.return_value = specs.Array(
         shape=(1,), dtype=np.float32
     )
-    ttl_mock.commands_spec.return_value = {}
+    task_layer_mock.commands_spec.return_value = {}
 
     action_adapter = mock.create_autospec(
         reaf_action_space_adapter.ActionSpaceAdapter, instance=True
@@ -1795,10 +1839,10 @@ class EnvironmentLoggerIntegrationTest(absltest.TestCase):
     action_adapter.task_commands_keys.return_value = set()
 
     environment = reaf_environment.Environment(
-        data_acquisition_and_control_layer=mock.create_autospec(
-            reaf_dacl.DataAcquisitionAndControlLayer, instance=True
+        device_layer=mock.create_autospec(
+            device_layer_module.DeviceLayer, instance=True
         ),
-        task_logic_layer=ttl_mock,
+        task_layer=task_layer_mock,
         action_space_adapter=action_adapter,
         observation_space_adapter=mock.create_autospec(
             reaf_observation_space_adapter.ObservationSpaceAdapter,

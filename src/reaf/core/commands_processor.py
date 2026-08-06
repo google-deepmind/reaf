@@ -23,7 +23,7 @@ class CommandsProcessor(abc.ABC):
   """Perform commands manipulation.
 
   The following describes the processing pipeline starting from the top (closer
-  to the policy) to the bottom (interfacing with the DACL commands spec).
+  to the policy) to the bottom (interfacing with the DeviceLayer commands spec).
 
   Assume that we have two processing units:
   Processor 1) has a consumed_commands_spec for two keys: "p1/c1" and "p1/c2".
@@ -32,7 +32,7 @@ class CommandsProcessor(abc.ABC):
     produced_commands_keys are "p3/c1" and "p3/c2".
 
   Specs are propagated starting from the bottom:
-  1) In this example assume that the DACL exposes "p3/c1", "p3/c2" and "p3/c3".
+  1) In this example assume that the DeviceLayer exposes "p3/c1", "p3/c2" and "p3/c3".
   2) Processor 2) returns ("p3/c1", "p3/c2") from input "p2/c1". This means that
     the global commands spec exposed at this level is "p2/c1" and the
     unprocessed "p3/c3".
@@ -52,7 +52,7 @@ class CommandsProcessor(abc.ABC):
        | "p3/c1"   | "p3/c2"         |
        |           |                 |
      ------------------------------------
-    |               DACL                 |
+    |               DeviceLayer          |
      ------------------------------------
   """
 

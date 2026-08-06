@@ -25,7 +25,6 @@ from reaf.common import environment_reset_from_callable
 from reaf.common import partitioner_action_space_adapter
 from reaf.core import action_space_adapter
 from reaf.core import commands_processor as reaf_commands_processor
-from reaf.core import data_acquisition_and_control_layer as dacl_module
 from reaf.core import default_discount_provider
 from reaf.core import default_observation_space_adapter
 from reaf.core import device
@@ -39,28 +38,25 @@ from reaf.core import logger as reaf_logger
 from reaf.core import observation_space_adapter
 from reaf.core import reward_provider as reaf_reward_provider
 from reaf.core import task_layer
-from reaf.core import task_logic_layer as tll_module
 from reaf.core import termination_checker as reaf_termination_checker
 import tree
 from typing_extensions import override
 
 
-def create_dacl(
+def create_device_layer(
     *devices: device.Device,
-) -> dacl_module.DataAcquisitionAndControlLayer:
-  """Returns a DACL.
+) -> device_layer.DeviceLayer:
+  """Returns a DeviceLayer.
 
   Args:
-    *devices: devices to be used, a FakeDeviceCoordinator is given to the DACL.
+    *devices: devices to be used, a FakeDeviceCoordinator is given to the
+      DeviceLayer.
   """
 
-  return cast(
-      dacl_module.DataAcquisitionAndControlLayer,
-      device_layer.DeviceLayer(
-          device_coordinator=FakeDeviceCoordinator(devices=list(devices)),
-          commands_trigger=None,
-          measurements_trigger=None,
-      ),
+  return device_layer.DeviceLayer(
+      device_coordinator=FakeDeviceCoordinator(devices=list(devices)),
+      commands_trigger=None,
+      measurements_trigger=None,
   )
 
 
@@ -92,39 +88,6 @@ def create_task_layer(
       or default_discount_provider.DefaultDiscountProvider(),
       features_observers=features_observers or [],
       loggers=loggers or [],
-  )
-
-
-def create_task_logic_layer(
-    *,
-    commands_processors: (
-        Sequence[reaf_commands_processor.CommandsProcessor] | None
-    ) = None,
-    features_producers: (
-        Sequence[reaf_features_producer.FeaturesProducer] | None
-    ) = None,
-    reward_provider: reaf_reward_provider.RewardProvider | None = None,
-    termination_checkers: (
-        Sequence[reaf_termination_checker.TerminationChecker] | None
-    ) = None,
-    discount_provider: reaf_discount_provider.DiscountProvider | None = None,
-    features_observers: (
-        Sequence[reaf_features_observers.FeaturesObserver] | None
-    ) = None,
-    loggers: Sequence[reaf_logger.Logger] | None = None,
-) -> tll_module.TaskLogicLayer:
-  """Returns a TaskLogicLayer."""
-  return cast(
-      tll_module.TaskLogicLayer,
-      create_task_layer(
-          commands_processors=commands_processors,
-          features_producers=features_producers,
-          reward_provider=reward_provider,
-          termination_checkers=termination_checkers,
-          discount_provider=discount_provider,
-          features_observers=features_observers,
-          loggers=loggers,
-      ),
   )
 
 
@@ -338,10 +301,10 @@ class CommandRenamer(reaf_commands_processor.CommandsProcessor):
   def __init__(
       self,
       low_to_high_level_mapping: dict[str, str],
-      dacl_spec: Mapping[str, gdmr_types.AnyArraySpec],
+      device_layer_spec: Mapping[str, gdmr_types.AnyArraySpec],
   ):
     self._consumed_commands_spec = {  # pyrefly: ignore[invalid-type-var]
-        high_level_name: dacl_spec[low_level_name]
+        high_level_name: device_layer_spec[low_level_name]
         for low_level_name, high_level_name in low_to_high_level_mapping.items()
     }
     self._low_to_high_level_mapping = low_to_high_level_mapping
