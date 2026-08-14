@@ -86,7 +86,7 @@ class WorkspaceLimitsTerminationChecker(termination_checker.TerminationChecker):
   ) -> termination_checker.TerminationResult:
     """Checks if the episode should terminate based on the workspace limits."""
     # tcp = tool center point
-    tcp_position = required_features[self._tcp_position_key]
+    tcp_position = np.asarray(required_features[self._tcp_position_key])
     if np.all(
         tcp_position
         > np.asarray([
