@@ -85,7 +85,7 @@ class DeltaToAbsoluteCommandsProcessor(
   ) -> Mapping[str, gdmr_types.ArrayType]:
     return {  # pyrefly: ignore[bad-return]
         self._config.produced_command_key: (
-            self._reference
+            self._reference  # pyrefly: ignore[bad-assignment]
             + consumed_commands[self._config.consumed_command_key]
         )
     }

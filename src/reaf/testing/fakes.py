@@ -154,7 +154,7 @@ class FakeDevice(device.Device):
   ):
     if commands_spec is None:
       commands_spec = {  # pyrefly: ignore[bad-assignment]
-          f"{name}_{test_specs.random_string()}": test_specs.random_array_spec()
+          f"{name}_{test_specs.random_string()}": test_specs.random_array_spec()  # pyrefly: ignore[bad-assignment]
       }
     if measurements_spec is None:
       measurements_spec = {

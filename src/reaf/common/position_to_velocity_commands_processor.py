@@ -118,7 +118,7 @@ class PositionToVelocityCommandsProcessor(
     )
     return {  # pyrefly: ignore[bad-return]
         self._config.produced_velocity_command_key: (
-            self._current_velocity_command
+            self._current_velocity_command  # pyrefly: ignore[bad-assignment]
         )
     }
 

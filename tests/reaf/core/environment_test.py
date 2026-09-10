@@ -1023,8 +1023,8 @@ class EnvironmentTest(parameterized.TestCase):
     # Check equality of the timestep.
     expected_timestep = timestep_builder(
         final_observation,  # pyrefly: ignore[bad-argument-type]
-        {"reward1": np.asarray(5.6).astype(np.float32)},  # pyrefly: ignore[bad-argument-type]
-        {"discount": np.asarray(0.9).astype(np.float32)},  # pyrefly: ignore[bad-argument-type]
+        {"reward1": np.asarray(5.6).astype(np.float32)},  # pyrefly: ignore[bad-argument-type, bad-assignment]
+        {"discount": np.asarray(0.9).astype(np.float32)},  # pyrefly: ignore[bad-argument-type, bad-assignment]
     )
     np.testing.assert_equal(timestep, expected_timestep)
 
@@ -1639,9 +1639,9 @@ class EnvironmentTest(parameterized.TestCase):
             shape=(1,), dtype=np.float32, minimum=0, maximum=1.0
         ),
         observation={  # pyrefly: ignore[bad-argument-type]
-            "observation1": specs.Array(shape=(3,), dtype=np.float32),
-            "observation2": specs.Array(shape=(5,), dtype=np.int32),
-            "feature1": specs.Array(shape=(3,), dtype=np.float32),
+            "observation1": specs.Array(shape=(3,), dtype=np.float32),  # pyrefly: ignore[bad-assignment]
+            "observation2": specs.Array(shape=(5,), dtype=np.int32),  # pyrefly: ignore[bad-assignment]
+            "feature1": specs.Array(shape=(3,), dtype=np.float32),  # pyrefly: ignore[bad-assignment]
         },
     )
     self.assertEqual(environment.timestep_spec(), expected_timestep_spec)

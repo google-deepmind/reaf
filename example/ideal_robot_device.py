@@ -53,7 +53,7 @@ class IdealRobotDevice(device.Device):
   @override
   def commands_spec(self) -> dict[str, gdmr_types.AnyArraySpec]:
     return {  # pyrefly: ignore[bad-return]
-        ROBOT_COMMAND_CURRENT_KEY: specs.BoundedArray(
+        ROBOT_COMMAND_CURRENT_KEY: specs.BoundedArray(  # pyrefly: ignore[bad-assignment]
             shape=(self._robot.dofs,),
             dtype=np.float32,
             minimum=-np.inf * np.ones(self._robot.dofs),
