@@ -28,11 +28,11 @@ import numpy as np
 from reaf.core import action_space_adapter as reaf_action_space_adapter
 from reaf.core import data_acquisition_and_control_layer as dacl_module
 from reaf.core import default_observation_space_adapter
-from reaf.core import device_layer
+from reaf.core import device_layer as reaf_device_layer
 from reaf.core import logger as reaf_logger
 from reaf.core import observation_space_adapter as reaf_observation_space_adapter
 from reaf.core import pass_through_action_space_adapter
-from reaf.core import task_layer
+from reaf.core import task_layer as reaf_task_layer
 from reaf.core import task_logic_layer as tll_module
 import tree
 
@@ -101,8 +101,8 @@ class Environment(gdmr_env.Environment):
   def __init__(
       self,
       *,
-      device_layer: device_layer.DeviceLayer | None = None,
-      task_layer: task_layer.TaskLayer | None = None,
+      device_layer: reaf_device_layer.DeviceLayer | None = None,
+      task_layer: reaf_task_layer.TaskLayer | None = None,
       environment_reset: EnvironmentReset,
       action_space_adapter: (
           reaf_action_space_adapter.ActionSpaceAdapter | None
@@ -115,9 +115,9 @@ class Environment(gdmr_env.Environment):
       action_spec_enforcement_option: ActionSpecEnforcementOption = ActionSpecEnforcementOption.RAISE_ERROR,
       # Deprecated kwargs kept for backwards compatibility.
       data_acquisition_and_control_layer: (
-          device_layer.DeviceLayer | None
+          reaf_device_layer.DeviceLayer | None
       ) = None,
-      task_logic_layer: task_layer.TaskLayer | None = None,
+      task_logic_layer: reaf_task_layer.TaskLayer | None = None,
   ):
     """Creates an environment.
 
@@ -334,7 +334,7 @@ class Environment(gdmr_env.Environment):
     self._should_finalize_episode = False
 
   @property
-  def device_layer(self) -> device_layer.DeviceLayer:
+  def device_layer(self) -> reaf_device_layer.DeviceLayer:
     return self._device_layer
 
   @property
@@ -352,7 +352,7 @@ class Environment(gdmr_env.Environment):
     return cast(dacl_module.DataAcquisitionAndControlLayer, self._device_layer)
 
   @property
-  def task_layer(self) -> task_layer.TaskLayer:
+  def task_layer(self) -> reaf_task_layer.TaskLayer:
     return self._task_layer
 
   @property
