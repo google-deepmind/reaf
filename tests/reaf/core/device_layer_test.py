@@ -281,6 +281,8 @@ class DeviceLayerTest(absltest.TestCase):
     )
 
     device_layer.begin_stepping()
+    command_trigger.reset.assert_called_once()
+    measurements_trigger.reset.assert_called_once()
     measurements_trigger.wait_for_event.assert_called_once()
     command_trigger.wait_for_event.assert_not_called()
 

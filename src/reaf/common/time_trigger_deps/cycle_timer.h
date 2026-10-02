@@ -26,6 +26,7 @@ class CycleTimer {
   CycleTimer(std::unique_ptr<absl::Clock> clock, absl::Duration period);
 
   void WaitForNextPeriod();
+  void Reset();
 
  private:
   std::unique_ptr<absl::Clock> clock_;

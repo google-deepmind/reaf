@@ -38,6 +38,19 @@ class TimeTriggerTest(absltest.TestCase):
     # are no guarantees that the scheduler will be able to run the trigger
     # exactly at the right time, especially on Forge.
 
+  def test_reset(self):
+    trigger = time_trigger.TimeTrigger(
+        period=datetime.timedelta(milliseconds=200)
+    )
+    trigger.wait_for_event()
+    trigger.reset()
+    before_time = datetime.datetime.now()
+    trigger.wait_for_event()
+    after_time = datetime.datetime.now()
+    self.assertGreaterEqual(
+        after_time - before_time, datetime.timedelta(milliseconds=200)
+    )
+
 
 if __name__ == "__main__":
   absltest.main()

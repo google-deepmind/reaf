@@ -27,3 +27,6 @@ class Trigger(abc.ABC):
   @abc.abstractmethod
   def wait_for_event(self) -> None:
     """Blocks until the next event."""
+
+  def reset(self) -> None:
+    """Resets any internal state of the trigger (e.g. at episode boundaries)."""

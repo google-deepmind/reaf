@@ -38,7 +38,8 @@ PYBIND11_MODULE(cycle_timer, m) {
   py::class_<CycleTimer>(m, "CycleTimer")
       .def(py::init(&CreateCycleTimer), py::arg("period"))
       .def("wait_for_next_period", &CycleTimer::WaitForNextPeriod,
-           py::call_guard<py::gil_scoped_release>());
+           py::call_guard<py::gil_scoped_release>())
+      .def("reset", &CycleTimer::Reset);
 }
 
 }  // namespace

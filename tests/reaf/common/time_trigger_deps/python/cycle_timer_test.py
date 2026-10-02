@@ -51,6 +51,17 @@ class CycleTimerTest(absltest.TestCase):
         after_call - before_call, datetime.timedelta(seconds=0.5)
     )
 
+  def test_reset_restarts_period(self):
+    timer = cycle_timer.CycleTimer(datetime.timedelta(seconds=0.2))
+    timer.wait_for_next_period()
+    timer.reset()
+    before_call = datetime.datetime.now()
+    timer.wait_for_next_period()
+    after_call = datetime.datetime.now()
+    self.assertGreaterEqual(
+        after_call - before_call, datetime.timedelta(seconds=0.2)
+    )
+
 
 if __name__ == "__main__":
   absltest.main()

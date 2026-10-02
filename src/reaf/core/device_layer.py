@@ -64,8 +64,11 @@ class DeviceLayer:
     """Begins stepping the device layer and returns the current measurements."""
     self._coordinator.on_begin_stepping()
 
+    if self._commands_trigger is not None:
+      self._commands_trigger.reset()
     # Wait for the first trigger to happen before collecting the measurements.
     if self._measurements_trigger is not None:
+      self._measurements_trigger.reset()
       self._measurements_trigger.wait_for_event()
     return self._get_measurements()
 

@@ -71,4 +71,6 @@ void CycleTimer::WaitForNextPeriod() {
   }
 }
 
+void CycleTimer::Reset() { last_run_ = absl::InfinitePast(); }
+
 }  // namespace reaf

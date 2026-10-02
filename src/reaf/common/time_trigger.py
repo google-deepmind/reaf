@@ -35,3 +35,6 @@ class TimeTrigger(trigger.Trigger):
 
   def wait_for_event(self) -> None:
     self._timer.wait_for_next_period()
+
+  def reset(self) -> None:
+    self._timer.reset()
