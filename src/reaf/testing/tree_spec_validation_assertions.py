@@ -51,8 +51,8 @@ class TreeSpecValidationAssertions(unittest.TestCase):
             f"Spec mismatch. Spec: {spec} and the tree_structure:"
             f" {tree_structure}"
         )
-      for idx, sub_tree in enumerate(tree_structure):  # pyrefly: ignore[bad-argument-type, not-iterable]
-        self.assert_tree_matches_spec(sub_tree, spec[idx])  # pyrefly: ignore[bad-argument-type, bad-index]
+      for idx, sub_tree in enumerate(tree_structure):  # pyrefly: ignore[not-iterable]
+        self.assert_tree_matches_spec(sub_tree, spec[idx])  # pyrefly: ignore[bad-index]
     elif isinstance(spec, specs.Array):
       try:
         spec.validate(tree_structure)

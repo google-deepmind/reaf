@@ -153,7 +153,7 @@ class FakeDevice(device.Device):
       measurements_spec: Mapping[str, specs.Array] | None = None,
   ):
     if commands_spec is None:
-      commands_spec = {  # pyrefly: ignore[bad-assignment]
+      commands_spec = {
           f"{name}_{test_specs.random_string()}": test_specs.random_array_spec()  # pyrefly: ignore[bad-assignment]
       }
     if measurements_spec is None:
@@ -173,7 +173,7 @@ class FakeDevice(device.Device):
 
   @override
   def commands_spec(self) -> Mapping[str, gdmr_types.AnyArraySpec]:
-    return self._commands_spec  # pyrefly: ignore[bad-return]
+    return self._commands_spec
 
   @override
   def measurements_spec(self) -> Mapping[str, specs.Array]:

@@ -350,7 +350,7 @@ class TaskLayerTest(parameterized.TestCase):
             ),
             "device_layer/command4": specs.DiscreteArray(num_values=4),
         },
-        task_layer.commands_spec(device_layer_commands_spec),  # pyrefly: ignore[bad-argument-type, bad-specialization]
+        task_layer.commands_spec(device_layer_commands_spec),  # pyrefly: ignore[bad-argument-type]
     )
 
   def test_reward_spec(self):

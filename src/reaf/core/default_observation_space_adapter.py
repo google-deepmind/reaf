@@ -59,13 +59,13 @@ class _DefaultObservationTypeMapper(ObservationTypeMapper):
       self, features_spec: Mapping[str, specs.Array]
   ) -> gdmr_types.ObservationSpec:  # pyrefly: ignore[invalid-type-var]
     """Returns the features spec, unmodified, as a `gdmr_types.ObservationSpec`."""
-    return features_spec  # pyrefly: ignore[bad-return]
+    return features_spec
 
   def to_observations(
       self, features: Mapping[str, gdmr_types.ArrayType]
   ) -> tree.Structure[gdmr_types.ArrayType]:  # pyrefly: ignore[invalid-type-var]
     """Returns the features, unmodified, as a `tree.Structure`."""
-    return features  # pyrefly: ignore[bad-return]
+    return features
 
 
 class DefaultObservationSpaceAdapter(
@@ -160,7 +160,7 @@ class DefaultObservationSpaceAdapter(
       filtered_features = dict(features)
     else:
       filtered_features = {
-          k: v for k, v in features.items() if k in selected_features  # pytype: disable=unsupported-operands
+          k: v for k, v in features.items() if k in selected_features
       }
 
     # 2. Downcast floats to max_float_dtype.
@@ -188,7 +188,7 @@ class DefaultObservationSpaceAdapter(
       filtered_specs = {
           k: v
           for k, v in self._task_features_spec.items()
-          if k in features_to_filter  # pytype: disable=unsupported-operands
+          if k in features_to_filter
       }
 
     # 2. Downcast floats to max_float_dtype.

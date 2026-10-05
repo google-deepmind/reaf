@@ -115,7 +115,7 @@ class CropImageFeaturesProducer(features_producer.FeaturesProducer):
       self, required_features: Mapping[str, gdmr_types.ArrayType]
   ) -> Mapping[str, gdmr_types.ArrayType]:
     """Returns the cropped the image feature."""
-    return {  # pyrefly: ignore[bad-return]
+    return {
         self._new_feature_name: required_features[self._image_feature_key][  # pyrefly: ignore[bad-assignment, bad-index]
             self._start_row : self._end_row,  # pyrefly: ignore[bad-index]
             self._start_column : self._end_column,

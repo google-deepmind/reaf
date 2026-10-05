@@ -154,9 +154,9 @@ class EnvironmentTest(parameterized.TestCase):
     self.assertEqual(
         gdmr_types.TimeStepSpec(
             step_type=gdmr_types.STEP_TYPE_SPEC,
-            reward=expected_reward_spec,  # pyrefly: ignore[bad-argument-type]
-            discount=expected_discount_spec,  # pyrefly: ignore[bad-argument-type]
-            observation=expected_observation_spec,  # pyrefly: ignore[bad-argument-type]
+            reward=expected_reward_spec,
+            discount=expected_discount_spec,
+            observation=expected_observation_spec,
         ),
         environment.timestep_spec(),
     )
@@ -1023,8 +1023,8 @@ class EnvironmentTest(parameterized.TestCase):
     # Check equality of the timestep.
     expected_timestep = timestep_builder(
         final_observation,  # pyrefly: ignore[bad-argument-type]
-        {"reward1": np.asarray(5.6).astype(np.float32)},  # pyrefly: ignore[bad-argument-type, bad-assignment]
-        {"discount": np.asarray(0.9).astype(np.float32)},  # pyrefly: ignore[bad-argument-type, bad-assignment]
+        {"reward1": np.asarray(5.6).astype(np.float32)},  # pyrefly: ignore[bad-assignment]
+        {"discount": np.asarray(0.9).astype(np.float32)},  # pyrefly: ignore[bad-assignment]
     )
     np.testing.assert_equal(timestep, expected_timestep)
 
@@ -1638,10 +1638,10 @@ class EnvironmentTest(parameterized.TestCase):
         discount=specs.BoundedArray(
             shape=(1,), dtype=np.float32, minimum=0, maximum=1.0
         ),
-        observation={  # pyrefly: ignore[bad-argument-type]
-            "observation1": specs.Array(shape=(3,), dtype=np.float32),  # pyrefly: ignore[bad-assignment]
-            "observation2": specs.Array(shape=(5,), dtype=np.int32),  # pyrefly: ignore[bad-assignment]
-            "feature1": specs.Array(shape=(3,), dtype=np.float32),  # pyrefly: ignore[bad-assignment]
+        observation={
+            "observation1": specs.Array(shape=(3,), dtype=np.float32),
+            "observation2": specs.Array(shape=(5,), dtype=np.int32),
+            "feature1": specs.Array(shape=(3,), dtype=np.float32),
         },
     )
     self.assertEqual(environment.timestep_spec(), expected_timestep_spec)

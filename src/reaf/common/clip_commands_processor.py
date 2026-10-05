@@ -94,7 +94,7 @@ class ClipCommandsProcessor(commands_processor.CommandsProcessor):
   ) -> Mapping[str, gdmr_types.ArrayType]:
     clipped_command = consumed_commands[self._command_to_clip]
 
-    return {  # pyrefly: ignore[bad-return]
+    return {
         self._command_to_clip: np.clip(  # pyrefly: ignore[bad-assignment]
             clipped_command,
             self._min_command,

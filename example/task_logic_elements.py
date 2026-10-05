@@ -61,7 +61,7 @@ class ConstantFactorCommandsProcessor(commands_processor.CommandsProcessor):
       self, consumed_commands: Mapping[str, gdmr_types.ArrayType]
   ) -> Mapping[str, gdmr_types.ArrayType]:
     command = consumed_commands[self._consumed_key]
-    return {self._produced_key: command * self._torque_to_current_factor}  # pyrefly: ignore[bad-assignment, bad-return, unsupported-operation]
+    return {self._produced_key: command * self._torque_to_current_factor}  # pyrefly: ignore[bad-assignment, unsupported-operation]
 
   @override
   def consumed_commands_spec(self) -> Mapping[str, gdmr_types.AnyArraySpec]:
@@ -93,7 +93,7 @@ class ReferenceProducer(features_producer.FeaturesProducer):
       self, required_features: Mapping[str, gdmr_types.ArrayType]
   ) -> Mapping[str, gdmr_types.ArrayType]:
     new_reference = self._producer()
-    return {POSITION_REFERENCE_KEY: new_reference}  # pyrefly: ignore[bad-assignment, bad-return]
+    return {POSITION_REFERENCE_KEY: new_reference}  # pyrefly: ignore[bad-assignment]
 
   def produced_features_spec(self) -> Mapping[str, specs.Array]:
     # Get a reference to retrieve its size.
@@ -139,7 +139,7 @@ class PositionAndVelocityErrorRewardProvider(reward_provider.RewardProvider):
         np.linalg.norm(required_features[self._velocity_key]) ** 2
     )
 
-    return 1 - (position_square_norm + 0.1 * velocity_square_norm)  # pyrefly: ignore[bad-return]
+    return 1 - (position_square_norm + 0.1 * velocity_square_norm)
 
   @override
   def reward_spec(self) -> tree.Structure[specs.Array]:  # pyrefly: ignore[invalid-type-var]
