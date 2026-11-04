@@ -10,7 +10,7 @@ minimum-version = "build-system.requires"
 name = "reaf"
 version = "1.1.1"
 description = "Robotics Environment Authoring Framework."
-requires-python = ">=3.10,<3.15"
+requires-python = ">=3.10,<3.16"
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
@@ -50,11 +50,6 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-simulation = [
-  "mujoco >= 3.10.0",
-  "mujoco-warp >= 3.9.0",
-  "torch >= 2.0.0",
-]
 dev = [
   "pytest-xdist",
 ]
