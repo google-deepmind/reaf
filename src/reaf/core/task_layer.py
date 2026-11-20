@@ -15,7 +15,7 @@
 
 from collections.abc import Mapping, Sequence
 import itertools
-from typing import Any, Protocol
+from typing import Protocol
 
 from absl import logging
 from dm_env import specs
@@ -37,35 +37,6 @@ class _ResettableObject(Protocol):
 
   def reset(self) -> None:
     ...
-
-
-def _resolve_deprecated_argument(
-    *,
-    new_val: Any | None,
-    old_val: Any | None,
-    new_name: str,
-    old_name: str,
-) -> Any:
-  """Ensure that only one of the deprecated arguments is provided.
-
-  Args:
-    new_val: The new argument value.
-    old_val: The old argument value.
-    new_name: The name of the new argument for error formatting.
-    old_name: The name of the old argument for error formatting.
-
-  Returns:
-    The value of the new argument if provided, otherwise the value of the old
-    argument.
-
-  Raises:
-    ValueError: If both or neither arguments are provided.
-  """
-  if old_val is not None and new_val is not None:
-    raise ValueError(f"Cannot provide both {old_name} and {new_name}")
-  if old_val is None and new_val is None:
-    raise ValueError(f"Must provide either {old_name} or {new_name}")
-  return new_val if new_val is not None else old_val
 
 
 class TaskLayer:
@@ -148,46 +119,20 @@ class TaskLayer:
   def validate_spec(
       self,
       *,
-      device_layer_commands_spec: (
-          Mapping[str, gdmr_types.AnyArraySpec] | None
-      ) = None,
-      device_layer_measurements_spec: Mapping[str, specs.Array] | None = None,
-      # TODO: Delete this.
-      dacl_commands_spec: Mapping[str, gdmr_types.AnyArraySpec] | None = None,
-      # TODO: Delete this.
-      dacl_measurements_spec: Mapping[str, specs.Array] | None = None,
+      device_layer_commands_spec: Mapping[str, gdmr_types.AnyArraySpec],
+      device_layer_measurements_spec: Mapping[str, specs.Array],
   ) -> None:
     """Checks that the specs have consistent keys."""
-    resolved_commands_spec = _resolve_deprecated_argument(
-        new_val=device_layer_commands_spec,
-        old_val=dacl_commands_spec,
-        new_name="device_layer_commands_spec",
-        old_name="dacl_commands_spec",
-    )
-    resolved_measurements_spec = _resolve_deprecated_argument(
-        new_val=device_layer_measurements_spec,
-        old_val=dacl_measurements_spec,
-        new_name="device_layer_measurements_spec",
-        old_name="dacl_measurements_spec",
-    )
     logging.vlog(3, "Validate features processing")
-    self._validate_features_spec(resolved_measurements_spec)
-    self._validate_commands_spec(resolved_commands_spec)
+    self._validate_features_spec(device_layer_measurements_spec)
+    self._validate_commands_spec(device_layer_commands_spec)
 
   def features_spec(
       self,
-      device_layer_measurements_spec: Mapping[str, specs.Array] | None = None,
-      # TODO: Delete this.
-      dacl_measurements_spec: Mapping[str, specs.Array] | None = None,
+      device_layer_measurements_spec: Mapping[str, specs.Array],
   ) -> Mapping[str, specs.Array]:
     """Returns the features spec as exposed by the task layer."""
-    resolved_measurements_spec = _resolve_deprecated_argument(
-        new_val=device_layer_measurements_spec,
-        old_val=dacl_measurements_spec,
-        new_name="device_layer_measurements_spec",
-        old_name="dacl_measurements_spec",
-    )
-    spec = dict(resolved_measurements_spec)
+    spec = dict(device_layer_measurements_spec)
     for features_producer in self._features_producers:
       spec.update(features_producer.produced_features_spec())
 
@@ -195,11 +140,7 @@ class TaskLayer:
 
   def commands_spec(
       self,
-      device_layer_commands_spec: (
-          Mapping[str, gdmr_types.AnyArraySpec] | None
-      ) = None,
-      # TODO: Delete this.
-      dacl_commands_spec: Mapping[str, gdmr_types.AnyArraySpec] | None = None,
+      device_layer_commands_spec: Mapping[str, gdmr_types.AnyArraySpec],
   ) -> Mapping[str, gdmr_types.AnyArraySpec]:
     """Returns the commands spec exposed by the task layer."""
     # Each processor consumes commands (as described by its
@@ -209,13 +150,9 @@ class TaskLayer:
     # (i.e. in the direction DeviceLayer -> Policy) through every processor to
     # remove the `produced_commands_keys` from the spec, and add their
     # `consumed_commands_spec` to the spec.
-    resolved_commands_spec = _resolve_deprecated_argument(
-        new_val=device_layer_commands_spec,
-        old_val=dacl_commands_spec,
-        new_name="device_layer_commands_spec",
-        old_name="dacl_commands_spec",
+    spec: Mapping[str, gdmr_types.AnyArraySpec] = dict(
+        device_layer_commands_spec
     )
-    spec: Mapping[str, gdmr_types.AnyArraySpec] = dict(resolved_commands_spec)
     for processor in reversed(self._commands_processors):
       processor_produced_keys = processor.produced_commands_keys()
       spec = {
@@ -341,7 +278,7 @@ class TaskLayer:
     """Validates the features spec."""
     # Check measurements/features path.
     current_key_set = set(device_layer_measurements_spec.keys())
-    logging.vlog(4, "DACL measurements keys: %s", current_key_set)
+    logging.vlog(4, "DeviceLayer measurements keys: %s", current_key_set)
 
     for producer in self._features_producers:
       logging.vlog(
@@ -380,11 +317,13 @@ class TaskLayer:
       self, device_layer_commands_spec: Mapping[str, gdmr_types.AnyArraySpec]
   ) -> None:
     """Validates the commands spec."""
-    # Check commands. Starting from the DACL command specs we propagate up in
-    # the chain.
-    logging.vlog(3, "Validate commands processing from DACL to Policy.")
+    # Check commands. Starting from the DeviceLayer command specs we propagate
+    # up in the chain.
+    logging.vlog(
+        3, "Validate commands processing from DeviceLayer to Policy."
+    )
     current_key_set = set(device_layer_commands_spec.keys())
-    logging.vlog(4, "DACL commands keys: %s", current_key_set)
+    logging.vlog(4, "DeviceLayer commands keys: %s", current_key_set)
 
     for processor in reversed(self._commands_processors):
       produced_command_keys = processor.produced_commands_keys()

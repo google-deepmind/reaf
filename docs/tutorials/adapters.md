@@ -157,7 +157,7 @@ from reaf.core import device_layer as dl_module
 from reaf.core import task_layer as tl_module
 # ...
 
-# Key for the agent's action. This is internal to the TLL.
+# Key for the agent's action. This is internal to the TaskLayer.
 AGENT_TORQUE_KEY = "agent_torque"
 
 

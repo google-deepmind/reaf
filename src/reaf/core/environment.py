@@ -16,8 +16,7 @@
 import abc
 from collections.abc import Mapping
 import strenum
-from typing import Generic, cast
-import warnings
+from typing import Generic
 
 from absl import logging
 import dm_env
@@ -26,14 +25,12 @@ from gdm_robotics.interfaces import environment as gdmr_env
 from gdm_robotics.interfaces import types as gdmr_types
 import numpy as np
 from reaf.core import action_space_adapter as reaf_action_space_adapter
-from reaf.core import data_acquisition_and_control_layer as dacl_module
 from reaf.core import default_observation_space_adapter
 from reaf.core import device_layer as reaf_device_layer
 from reaf.core import logger as reaf_logger
 from reaf.core import observation_space_adapter as reaf_observation_space_adapter
 from reaf.core import pass_through_action_space_adapter
 from reaf.core import task_layer as reaf_task_layer
-from reaf.core import task_logic_layer as tll_module
 import tree
 
 
@@ -101,8 +98,8 @@ class Environment(gdmr_env.Environment):
   def __init__(
       self,
       *,
-      device_layer: reaf_device_layer.DeviceLayer | None = None,
-      task_layer: reaf_task_layer.TaskLayer | None = None,
+      device_layer: reaf_device_layer.DeviceLayer,
+      task_layer: reaf_task_layer.TaskLayer,
       environment_reset: EnvironmentReset,
       action_space_adapter: (
           reaf_action_space_adapter.ActionSpaceAdapter | None
@@ -113,11 +110,6 @@ class Environment(gdmr_env.Environment):
       end_of_episode_handler: EndOfEpisodeHandler | None = None,
       environment_closer: EnvironmentCloser | None = None,
       action_spec_enforcement_option: ActionSpecEnforcementOption = ActionSpecEnforcementOption.RAISE_ERROR,
-      # Deprecated kwargs kept for backwards compatibility.
-      data_acquisition_and_control_layer: (
-          reaf_device_layer.DeviceLayer | None
-      ) = None,
-      task_logic_layer: reaf_task_layer.TaskLayer | None = None,
   ):
     """Creates an environment.
 
@@ -146,51 +138,7 @@ class Environment(gdmr_env.Environment):
         warning logged if the action is outside the spec. If `RAISE_ERROR`, an
         error will be raised if the action is outside the  spec. If `IGNORE`,
         the action will be passed through. Default is `RAISE_ERROR`.
-      data_acquisition_and_control_layer: DEPRECATED. Use `device_layer`.
-      task_logic_layer: DEPRECATED. Use `task_layer`.
     """
-    # Handle deprecated kwarg names.
-    if data_acquisition_and_control_layer is not None:
-      warnings.warn(
-          "The 'data_acquisition_and_control_layer' argument was renamed to "
-          "'device_layer' (semantics are unchanged). This argument is "
-          "deprecated, use 'device_layer' instead.",
-          DeprecationWarning,
-          stacklevel=2,
-      )
-      if device_layer is not None:
-        raise ValueError(
-            "Cannot specify both 'data_acquisition_and_control_layer' and "
-            "'device_layer'. Use 'device_layer' only."
-        )
-      device_layer = data_acquisition_and_control_layer
-
-    if task_logic_layer is not None:
-      warnings.warn(
-          "The 'task_logic_layer' argument was renamed to 'task_layer' "
-          "(semantics are unchanged). This argument is deprecated, use "
-          "'task_layer' instead.",
-          DeprecationWarning,
-          stacklevel=2,
-      )
-      if task_layer is not None:
-        raise ValueError(
-            "Cannot specify both 'task_logic_layer' and 'task_layer'. "
-            "Use 'task_layer' only."
-        )
-      task_layer = task_logic_layer
-
-    if device_layer is None:
-      raise TypeError(
-          "Environment.__init__ missing required keyword argument: "
-          "'device_layer' (or deprecated 'data_acquisition_and_control_layer')"
-      )
-    if task_layer is None:
-      raise TypeError(
-          "Environment.__init__ missing required keyword argument: "
-          "'task_layer' (or deprecated 'task_logic_layer')"
-      )
-
     self._device_layer = device_layer
     self._task_layer = task_layer
     self._end_of_episode_handler = (
@@ -338,34 +286,8 @@ class Environment(gdmr_env.Environment):
     return self._device_layer
 
   @property
-  def data_acquisition_and_control_layer(
-      self,
-  ) -> dacl_module.DataAcquisitionAndControlLayer:
-    """DEPRECATED: Use `device_layer` instead."""
-    warnings.warn(
-        "'data_acquisition_and_control_layer' property was renamed to "
-        "'device_layer' (semantics are unchanged). This property is "
-        "deprecated, use 'device_layer' instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return cast(dacl_module.DataAcquisitionAndControlLayer, self._device_layer)
-
-  @property
   def task_layer(self) -> reaf_task_layer.TaskLayer:
     return self._task_layer
-
-  @property
-  def task_logic_layer(self) -> tll_module.TaskLogicLayer:
-    """DEPRECATED: Use `task_layer` instead."""
-    warnings.warn(
-        "'task_logic_layer' property was renamed to 'task_layer' (semantics "
-        "are unchanged). This property is deprecated, use 'task_layer' "
-        "instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return cast(tll_module.TaskLogicLayer, self._task_layer)
 
   @property
   def environment_reset(self) -> EnvironmentReset:

@@ -37,9 +37,9 @@ class Logger(abc.ABC):
       See reset_with_options in ./environment.py.
 
     After reset, step is called repeatedly.
-    1. This first triggers steps 3 and 4 (See compute_final_commands in TLL
+    1. This first triggers steps 3 and 4 (See compute_final_commands in TaskLayer
        called from step in ./environment.py)
-    2. Features are computed (see compute_all_features in TLL called from
+    2. Features are computed (see compute_all_features in TaskLayer called from
        step in ./environment.py), triggering steps 1 and 2.
   """
 

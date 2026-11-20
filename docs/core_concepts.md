@@ -142,7 +142,7 @@ and reusability:
 
 *   **`Trigger`**: A `Trigger` is an optional component that can be used to
     control the timing of the Device Layer's operations. For example, a trigger can be
-    used to ensure that the DACL waits for a specific event before reading
+    used to ensure that the DeviceLayer waits for a specific event before reading
     sensor data, like a new camera frame, or more commonly, to guarantee
     consistent stepping frequency.
 
